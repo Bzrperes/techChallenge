@@ -124,14 +124,28 @@ O uso de `python -m pip` garante que os pacotes sejam instalados no mesmo interp
 | `fastapi` | Framework da API de inferência. |
 | `uvicorn` | Servidor ASGI para executar a API. |
 | `pytest` | Testes automatizados. |
-| `ipykernel` | Kernel Python utilizado para executar o notebook no VS Code ou Jupyter. |
-| `jupyterlab` | Ambiente independente para abrir e executar arquivos `.ipynb`. |
 
-Para iniciar o JupyterLab depois da instalação:
+### Execução dos notebooks
+
+Os notebooks podem ser executados no PyCharm, VS Code ou JupyterLab, conforme o ambiente utilizado por cada integrante.
+
+As dependências principais do projeto estão declaradas no `requirements.txt`. Dependendo da ferramenta escolhida, pode ser necessário instalar pacotes adicionais para executar arquivos `.ipynb`.
+
+Para utilizar o kernel Python do Jupyter:
 
 ```bash
+python -m pip install ipykernel
+```
+
+Para utilizar o JupyterLab:
+
+```bash
+python -m pip install jupyterlab
 python -m jupyterlab
 ```
+
+Esses pacotes são opcionais e não são necessários para executar a API FastAPI.
+
 
 ---
 
