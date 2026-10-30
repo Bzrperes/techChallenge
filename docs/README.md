@@ -7,6 +7,7 @@ Esta pasta reúne os documentos técnicos do Tech Challenge Fase 1, desenvolvido
 
 | Arquivo | Descrição |
 |---|---|
+| [ML_CANVAS.md](./ML_CANVAS.md) | Definição do problema de negócio, objetivos, stakeholders, dados, métricas e limitações do projeto. |
 | [MODEL_CARD.md](./MODEL_CARD.md) | Informações sobre o modelo escolhido, resultados, limitações e possíveis vieses. |
 | [ALTERACOES.md](./ALTERACOES.md) | Decisões técnicas realizadas durante a integração do modelo com a API. |
 | [VALIDACAO.md](./VALIDACAO.md) | Registro dos testes, verificações realizadas e limitações identificadas. |

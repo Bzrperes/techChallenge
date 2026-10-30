@@ -16,31 +16,45 @@ Notebooks: [`TechChallenge.ipynb`](./notebooks/TechChallenge.ipynb) (EDA e basel
 ## Estrutura do projeto
 
 ```text
-techChallenge-grupo/
-├── data/                  # Orientações e futuros artefatos de dados
-├── docs/                  # ML Canvas, Model Card e documentação técnica
-│   ├── ALTERACOES.md      # Decisões e rastreabilidade da Etapa 3
-│   └── VALIDACAO.md       # Verificações executadas e pendências
-├── models/
-│   └── pipeline_churn_rf.joblib   # Pipeline do modelo campeão usado pela API
-├── notebooks/
-│   ├── TechChallenge.ipynb        # EDA e baseline
-│   ├── 02_modelagem_avaliacao.ipynb
-│   └── artefatos/                 # Saídas geradas pelos notebooks (ex.: telco_tratado.csv)
-├── src/                   # Código produtivo do pipeline e da API
-│   ├── api.py             # Aplicação FastAPI (/health e /predict)
-│   ├── config.py          # Configurações e constantes
-│   ├── data.py            # Carga e limpeza dos dados
-│   ├── preprocessing.py   # Pré-processamento
-│   ├── predict.py         # Carga do modelo e geração de predições
-│   ├── schemas.py         # Esquemas de entrada e saída (Pydantic)
-│   ├── train.py           # Reprodução do treino do campeão
-│   └── verify.py          # Verificação API x pipeline
-├── tests/                 # Testes automatizados (pytest)
-├── .gitignore
-├── pytest.ini
-├── README.md
-└── requirements.txt
+
+techChallenge/
+├── data/                           # Documentação sobre a origem e o uso dos dados
+│   └── README.md                   # Informações sobre o dataset
+├── docs/                           # Documentação técnica do projeto
+│   ├── README.md                   # Índice dos documentos
+│   ├── ML_CANVAS.md                # Problema, objetivos, stakeholders e métricas de negócio
+│   ├── MODEL_CARD.md               # Modelo, métricas, limitações e possíveis vieses
+│   ├── ALTERACOES.md               # Decisões técnicas da integração
+│   └── VALIDACAO.md                # Testes realizados e resultados
+├── models/                         # Modelo final utilizado pela API
+│   ├── README.md                   # Informações sobre o modelo
+│   └── pipeline_churn_rf.joblib    # Pipeline treinado da Random Forest
+├── notebooks/                      # Experimentação e avaliação dos modelos
+│   ├── TechChallenge.ipynb         # EDA e baseline de Regressão Logística
+│   ├── 02_modelagem_avaliacao.ipynb # Comparação e seleção do modelo campeão
+│   └── artefatos/                  # Dados tratados e baseline salvo
+│       ├── baseline_churn.joblib   # Modelo baseline da Etapa 1
+│       └── telco_tratado.csv       # Dataset tratado utilizado na modelagem
+├── src/                            # Código produtivo do pipeline e da API
+│   ├── __init__.py                 # Identificação do pacote Python
+│   ├── api.py                      # API FastAPI (/health e /predict)
+│   ├── config.py                   # Configurações, variáveis e parâmetros
+│   ├── data.py                     # Carregamento e limpeza dos dados
+│   ├── preprocessing.py            # Pré-processamento das variáveis
+│   ├── predict.py                  # Carregamento do modelo e inferência
+│   ├── schemas.py                  # Validação das entradas e saídas da API
+│   ├── train.py                    # Reprodução do treinamento do campeão
+│   └── verify.py                   # Comparação entre API e pipeline
+├── tests/                          # Testes automatizados com Pytest
+│   ├── __init__.py                 # Identificação do pacote de testes
+│   ├── conftest.py                 # Fixtures utilizadas nos testes
+│   ├── test_api.py                 # Testes dos endpoints e das previsões
+│   └── test_preprocessing.py       # Testes de tratamento e pré-processamento
+├── .gitignore                      # Arquivos e pastas ignorados pelo Git
+├── pytest.ini                      # Configuração do Pytest
+├── requirements.txt                # Dependências do projeto
+└── README.md                       # Documentação principal e instruções de execução
+
 ```
 
 O arquivo `.env`, o ambiente virtual `.venv` e arquivos temporários não são publicados no GitHub. O dataset bruto é obtido diretamente do Kaggle para que o download seja reproduzível e não seja necessário versionar uma cópia local.
