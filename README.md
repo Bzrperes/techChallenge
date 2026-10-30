@@ -403,15 +403,16 @@ Reproduz a configuração vencedora: 100 árvores, profundidade 6, folha mínima
 
 Diferenças de versões de bibliotecas ou de dados podem alterar os resultados, portanto esse caminho não garante identidade com o arquivo original. A avaliação usa o mesmo teste já observado na Etapa 2, não uma amostra inédita.
 
+
 ## Documentação complementar
 
-- [`docs/ALTERACOES.md`](./docs/ALTERACOES.md): decisões e rastreabilidade da Etapa 3.
-- [`docs/VALIDACAO.md`](./docs/VALIDACAO.md): verificações executadas e pendências.
+- [`docs/MODEL_CARD.md`](./docs/MODEL_CARD.md): informações sobre o modelo, resultados, limitações e possíveis vieses.
+- [`docs/ALTERACOES.md`](./docs/ALTERACOES.md): decisões técnicas da integração com a API.
+- [`docs/VALIDACAO.md`](./docs/VALIDACAO.md): testes realizados, resultados e limitações das verificações.
 
 ---
+# Etapa 4 — Documentação e entrega final
 
-# Etapa 4 — Pendências da entrega final
+Organizamos a documentação do projeto na pasta `docs/`, incluindo o Model Card, as decisões técnicas e os registros de validação.
 
-- Model Card (performance, limitações e possíveis vieses) em `docs/`.
-- Vídeo de 5 minutos no método STAR.
-- Revisão final deste README.
+Ainda precisamos concluir a auditoria do repositório e preparar o vídeo de apresentação utilizando o método STAR.
