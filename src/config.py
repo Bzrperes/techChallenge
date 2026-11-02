@@ -13,9 +13,6 @@ METRICS_PATH = MODELS_DIR / "metricas_teste.json"
 
 # --- Colunas (mesmo contrato definido na EDA, Etapa 1) ---
 ALVO = "Churn Value"  # 1 = cancelou, 0 = ficou
-VAZAMENTO = ["Churn Label", "Churn Score", "CLTV", "Churn Reason"]
-IDENT_GEO = ["CustomerID", "Count", "Country", "State", "City",
-             "Zip Code", "Lat Long", "Latitude", "Longitude"]
 
 NUMERICAS = ["Tenure Months", "Monthly Charges", "Total Charges"]
 CATEGORICAS = ["Gender", "Senior Citizen", "Partner", "Dependents",

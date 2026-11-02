@@ -8,7 +8,7 @@ A base tratada e versionada fica em:
 
 `data/processed/telco_tratado.csv`
 
-Seu SHA-256 na movimentação foi `31D61B29480418D7AA7BF20F27D16DFACC87587EF941211E7A035AFC497F695C`, confirmando que o conteúdo não mudou.
+A mudança de pasta não alterou o conteúdo versionado.
 
 As 11 ausências de `Total Charges` de clientes com permanência zero recebem zero por regra determinística. Imputação para ausências inesperadas, padronização e codificação são aprendidas dentro dos pipelines somente com dados de treino.
 
