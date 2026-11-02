@@ -74,17 +74,27 @@ A Random Forest apresentou a maior PR-AUC média na validação cruzada. A Regre
 
 ## 7. Métricas de negócio
 
-A FIAP exige a definição de uma métrica de negócio. Como não há no projeto uma operação real de retenção, custos de campanha ou resultados posteriores às previsões, **não foi possível medir impacto de negócio**.
+A métrica oficial de negócio é a **redução incremental da taxa de churn em 90 dias** entre os clientes classificados como de maior risco.
 
-| Indicador | Finalidade | Situação |
-|---|---|---|
-| Taxa de churn | Acompanhar a proporção de clientes que cancelam em determinado período | **Referência histórica do dataset:** 26,54%; não é uma taxa operacional atual |
-| Redução da taxa de churn após ações de retenção | Avaliar se uma estratégia de retenção produz resultado | **Métrica de negócio proposta**, ainda sem meta, período ou medição |
-| Custo por cliente retido | Avaliar a relação entre gastos de retenção e resultados alcançados | **Indicador complementar proposto**, sem dados para cálculo |
+Em uma aplicação real, os 20% de clientes com maior propensão de churn seriam divididos aleatoriamente entre um grupo de tratamento, que receberia uma ação de retenção, e um grupo de controle, que não receberia a ação durante o período de avaliação.
 
-Para medir redução de churn de forma confiável, seria preciso definir período de acompanhamento, população-alvo, ações realizadas e uma forma de comparação que permita estimar seu efeito. O projeto não executou essa avaliação.
+**Redução incremental de churn = taxa de churn do grupo de controle − taxa de churn do grupo de tratamento**
 
-**Decisão pendente da equipe:** confirmar qual métrica de negócio será adotada formalmente e se a proposta de redução de churn representa o objetivo pretendido.
+A meta inicial para um futuro piloto é reduzir o churn em pelo menos **3 pontos percentuais absolutos** em até 90 dias. O intervalo de confiança de 95% também deverá ser reportado; a expansão da campanha dependeria de evidência de efeito positivo.
+
+Essa métrica foi escolhida porque relaciona o modelo ao problema de retenção, mede o efeito da ação em vez de apenas a capacidade de prever churn, evita atribuir ao modelo cancelamentos que ocorreriam sem intervenção, pode ser acompanhada pelas áreas de negócio e não exige inventar custos ou margens ausentes no dataset.
+
+O projeto atual não executou campanha real ou experimento controlado. A meta de 3 pontos percentuais é um objetivo para um piloto futuro, não um resultado alcançado.
+
+Como critério operacional futuro, o limiar de classificação deverá ser ajustado por validação cruzada no treino para buscar **recall mínimo de 80%**, maximizando precision ou valor de negócio entre os limiares elegíveis. A PR-AUC permanece como métrica técnica principal de comparação dos modelos.
+
+### Métrica financeira futura
+
+Quando houver dados de margem, ARPU, custo de contato e custo das ofertas, a campanha também deverá ser avaliada pelo **ROI incremental de retenção**:
+
+**ROI = margem incremental líquida gerada pela campanha ÷ custo total da campanha**
+
+A meta inicial proposta é um ROI mínimo de **1,25 em 180 dias**, com recuperação do investimento em até 90 dias. Essa métrica será complementar à redução incremental de churn e ainda não foi medida no projeto.
 
 ## 8. Utilização prevista da solução
 
@@ -120,11 +130,11 @@ Uma utilização potencial seria ordenar clientes por risco estimado para apoiar
 
 Foram registrados 19 testes aprovados, dois avisos e nenhuma falha. A API e o pipeline retornaram resultados equivalentes para uma amostra de 20 clientes. Essas verificações avaliam a integração, não o impacto comercial do projeto.
 
-## 11. Síntese e decisões pendentes
+## 11. Síntese e próximos passos
 
 O projeto entregou um pipeline de classificação de churn com Random Forest e inferência por API. A seleção do modelo foi feita por PR-AUC média na validação cruzada, mantendo o limiar de 0,5.
 
-Para completar o planejamento de negócio, ainda é necessário confirmar com a equipe a **métrica de negócio oficialmente adotada**. Também não houve validação de stakeholders, metas comerciais ou ações reais de retenção. Esses pontos permanecem identificados como propostas ou limitações, sem serem apresentados como resultados alcançados.
+A redução incremental de churn em 90 dias foi adotada como métrica oficial de negócio, com meta de 3 pontos percentuais para um futuro piloto controlado. O ROI incremental de retenção foi definido como métrica financeira futura, com meta inicial de 1,25 em 180 dias. Como não houve validação com stakeholders de uma operadora, campanha real ou medição comercial, essas metas não são apresentadas como resultados alcançados.
 
 ---
 

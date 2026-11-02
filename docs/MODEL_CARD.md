@@ -102,6 +102,8 @@ Identificamos algumas limitações que precisam ser consideradas na utilização
 - O recall de 0,5455 mostra que o modelo deixou de identificar parte dos clientes que cancelaram o serviço.
 - O limiar de 0,5 foi mantido sem uma análise específica dos custos envolvidos nas ações de retenção.
 - Não realizamos avaliações de calibração das probabilidades ou monitoramento do modelo em produção.
+- A redução incremental de churn em 90 dias foi definida como métrica de negócio para um futuro piloto, mas ainda não foi medida em um experimento controlado.
+- O ROI incremental de retenção, com meta inicial de 1,25 em 180 dias, depende de dados de margem, ARPU e custos que não estão disponíveis no dataset e também não foi medido.
 - O funcionamento da API depende do envio de dados compatíveis com as variáveis utilizadas no treinamento.
 
 Essas limitações devem ser consideradas antes de utilizar as previsões para orientar decisões reais de retenção de clientes.
@@ -141,4 +143,4 @@ O pipeline foi integrado à API FastAPI, mantendo as configurações e o comport
 
 Conseguimos estruturar o processo de previsão de churn, desde a preparação dos dados até a disponibilização do modelo para inferência.
 
-Como próximos passos, seria necessário avaliar o modelo com novos dados, analisar possíveis vieses, verificar a calibração das probabilidades e acompanhar seu desempenho antes de uma utilização em produção.
+Como próximos passos, seria necessário avaliar o modelo com novos dados, ajustar o limiar por validação cruzada para buscar recall mínimo de 80%, analisar possíveis vieses, verificar a calibração das probabilidades e medir a redução incremental de churn e o ROI em um piloto controlado antes de uma utilização em produção.

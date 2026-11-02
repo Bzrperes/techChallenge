@@ -9,7 +9,7 @@ Este projeto utiliza o dataset **Telco Customer Churn**, disponibilizado no Kagg
 | 1 — Entendimento e preparação | EDA, definição de métricas e baseline de Regressão Logística | Concluída |
 | 2 — Modelagem e avaliação | Árvore/Random Forest, MLP, validação cruzada e escolha do campeão | Concluída |
 | 3 — Engenharia de software e API | Refatoração para `src/`, testes com pytest e API FastAPI | Concluída |
-| 4 — Documentação e entrega final | Model Card, README final e vídeo STAR | Em andamento |
+| 4 — Documentação e entrega final | Model Card, README final e vídeo STAR | Documentação do repositório concluída; vídeo tratado separadamente |
 
 Notebooks: [`TechChallenge.ipynb`](./notebooks/TechChallenge.ipynb) (EDA e baseline) e [`02_modelagem_avaliacao.ipynb`](./notebooks/02_modelagem_avaliacao.ipynb) (modelagem e avaliação).
 
@@ -327,6 +327,43 @@ A EDA mostrou que 26,54% dos clientes pertencem à classe positiva (`Churn Value
 | **R², MAE, MSE e RMSE** | São métricas de regressão e não são adequadas para um problema de classificação binária. |
 | **MAPE** | Além de ser uma métrica de regressão, não é definida adequadamente quando o valor real pode ser zero, como ocorre no alvo binário. |
 
+## Métrica de negócio
+
+A métrica oficial de negócio do projeto é a **redução incremental da taxa de churn em 90 dias** entre os clientes classificados como de maior risco.
+
+Em uma aplicação real, os 20% de clientes com maior propensão de churn seriam divididos aleatoriamente entre:
+
+- **Grupo de tratamento:** recebe uma ação de retenção.
+- **Grupo de controle:** não recebe a ação durante o período de avaliação.
+
+A métrica seria calculada por:
+
+**Redução incremental de churn = taxa de churn do grupo de controle − taxa de churn do grupo de tratamento**
+
+A meta inicial definida para um futuro piloto é obter uma redução de pelo menos **3 pontos percentuais absolutos** no churn em até 90 dias. O intervalo de confiança de 95% também deverá ser reportado; a expansão da campanha dependeria de evidência de efeito positivo.
+
+Essa métrica foi escolhida porque:
+
+- relaciona diretamente o modelo ao problema de retenção da operadora;
+- mede o efeito da ação, e não apenas a capacidade de prever churn;
+- evita atribuir ao modelo cancelamentos que ocorreriam mesmo sem intervenção;
+- pode ser compreendida e acompanhada pelas áreas de negócio;
+- não exige inventar custos ou margens ausentes no dataset.
+
+O projeto atual não executou uma campanha real nem um experimento controlado. Portanto, a meta de 3 pontos percentuais representa um objetivo para um piloto futuro, e não um resultado já alcançado.
+
+Como critério operacional futuro, o limiar de classificação deverá ser ajustado por validação cruzada no conjunto de treino para buscar **recall mínimo de 80%**, maximizando precision ou valor de negócio entre os limiares que atendam a essa restrição. A PR-AUC permanece como métrica técnica principal para comparar a qualidade geral dos modelos.
+
+### Métrica financeira futura
+
+Quando estiverem disponíveis dados de margem, ARPU, custo de contato e custo das ofertas, a campanha também deverá ser avaliada pelo **ROI incremental de retenção**:
+
+**ROI = margem incremental líquida gerada pela campanha ÷ custo total da campanha**
+
+Como meta inicial, propõe-se um ROI mínimo de **1,25 em 180 dias**, com recuperação do investimento em até 90 dias.
+
+Essa métrica financeira será complementar: a redução incremental de churn continuará sendo a métrica principal para demonstrar que a intervenção realmente reteve clientes.
+
 ## Baselines
 
 ### 1. Regressão Logística
@@ -441,6 +478,6 @@ Diferenças de versões de bibliotecas ou de dados podem alterar os resultados, 
 ---
 # Etapa 4 — Documentação e entrega final
 
-Organizamos a documentação do projeto na pasta `docs/`, incluindo o Model Card, as decisões técnicas e os registros de validação.
+Organizamos e validamos a documentação do projeto na pasta `docs/`, incluindo o ML Canvas, o Model Card, as decisões técnicas e os registros de validação.
 
-Ainda precisamos concluir a auditoria do repositório e preparar o vídeo de apresentação utilizando o método STAR.
+A documentação do repositório está concluída. O vídeo de apresentação pelo método STAR é uma entrega separada e não está versionado neste repositório.
