@@ -1,12 +1,12 @@
 import numpy as np
 import pandas as pd
 import pytest
-
-from src.config import ALVO, FEATURES
-from src.data import limpar_features, separar_x_y
-from src.preprocessing import montar_pipeline, preparar_entrada
-from src.predict import carregar_artefato
 from sklearn.linear_model import LogisticRegression
+
+from src.config import MODEL_PATH, RF_PARAMS
+from src.data import limpar_features, separar_x_y
+from src.predict import carregar_artefato
+from src.preprocessing import montar_pipeline, preparar_entrada
 
 
 def test_limpar_features_trata_total_charges_em_branco(df_sintetico):
@@ -67,8 +67,8 @@ def test_rejeita_modelo_divergente(tmp_path, df_sintetico):
         carregar_artefato(path)
 
 
-def test_configuracao_fiel_etapa2(pipeline):
-    from src.config import RF_PARAMS
+def test_configuracao_fiel_ao_artefato_versionado():
+    pipeline = carregar_artefato(MODEL_PATH)["pipeline"]
     parametros = pipeline.named_steps["modelo"].get_params()
     assert all(parametros[k] == v for k, v in RF_PARAMS.items())
 

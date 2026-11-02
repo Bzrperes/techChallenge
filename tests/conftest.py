@@ -1,22 +1,39 @@
 """Fixtures compartilhadas: dados sintéticos (sem depender do Kaggle) e modelo mínimo."""
+import atexit
+import shutil
 from pathlib import Path
 from uuid import uuid4
 
 import numpy as np
 import pandas as pd
 import pytest
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.linear_model import LogisticRegression
 
 from src.config import ALVO, RANDOM_STATE
 from src.train import treinar_campeao
 
+_PASTA_TEMPORARIA: Path | None = None
+
+
+def _remover_temporarios(raiz: Path) -> None:
+    """Tenta remover todos os temporários sem mascarar o resultado dos testes."""
+    shutil.rmtree(raiz, ignore_errors=True)
+
 
 def pytest_configure(config):
     """Isola arquivos temporários por sessão para evitar bloqueios no Windows."""
+    global _PASTA_TEMPORARIA
     raiz_temporaria = Path(".pytest_runs").resolve()
+    _remover_temporarios(raiz_temporaria)
     raiz_temporaria.mkdir(exist_ok=True)
-    config.option.basetemp = str(raiz_temporaria / uuid4().hex)
+    _PASTA_TEMPORARIA = raiz_temporaria / uuid4().hex
+    config.option.basetemp = str(_PASTA_TEMPORARIA)
+    atexit.register(_remover_temporarios, raiz_temporaria)
+
+
+def pytest_sessionfinish(session, exitstatus):
+    """Remove o temporário da sessão, tolerando arquivos bloqueados no Windows."""
+    if _PASTA_TEMPORARIA is not None:
+        shutil.rmtree(_PASTA_TEMPORARIA, ignore_errors=True)
 
 
 def gerar_dados_sinteticos(n: int = 400, seed: int = RANDOM_STATE) -> pd.DataFrame:
@@ -61,8 +78,13 @@ def df_sintetico() -> pd.DataFrame:
 
 
 @pytest.fixture(scope="session")
-def pipeline(df_sintetico):
-    return treinar_campeao(df_sintetico)[0]
+def treino_sintetico(df_sintetico):
+    return treinar_campeao(df_sintetico)
+
+
+@pytest.fixture(scope="session")
+def pipeline(treino_sintetico):
+    return treino_sintetico[0]
 
 
 @pytest.fixture

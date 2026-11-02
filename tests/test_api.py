@@ -1,9 +1,10 @@
 import numpy as np
 import pytest
 from fastapi.testclient import TestClient
+
 from src.api import criar_app
-from src.schemas import Cliente
 from src.preprocessing import preparar_entrada
+from src.schemas import Cliente
 
 
 @pytest.fixture
@@ -44,6 +45,20 @@ def test_entrada_invalida(client, payload_cliente, campo, valor):
 
 def test_campo_obrigatorio(client, payload_cliente):
     payload_cliente.pop("tenure_months")
+    assert client.post("/predict", json=payload_cliente).status_code == 422
+
+
+@pytest.mark.parametrize(
+    "alteracoes",
+    [
+        {"phone_service": "No", "multiple_lines": "No"},
+        {"phone_service": "Yes", "multiple_lines": "No phone service"},
+        {"internet_service": "No", "online_security": "No"},
+        {"internet_service": "DSL", "online_security": "No internet service"},
+    ],
+)
+def test_rejeita_combinacoes_incoerentes(client, payload_cliente, alteracoes):
+    payload_cliente.update(alteracoes)
     assert client.post("/predict", json=payload_cliente).status_code == 422
 
 
