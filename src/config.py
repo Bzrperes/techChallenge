@@ -4,6 +4,7 @@ from pathlib import Path
 RANDOM_STATE = 42
 TEST_SIZE = 0.20
 CV_SPLITS = 5
+META_RECALL = 0.80
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
 DATA_DIR = ROOT_DIR / "data"
@@ -26,7 +27,7 @@ CATEGORICAS = ["Gender", "Senior Citizen", "Partner", "Dependents",
                "Contract", "Paperless Billing", "Payment Method"]
 FEATURES = NUMERICAS + CATEGORICAS
 
-# Campeão registrado na Etapa 2; decisão original via predict().
-LIMIAR = 0.5
+# Campeão registrado na Etapa 2. O limiar operacional é salvo junto ao
+# pipeline no artefato para evitar divergência entre treino e inferência.
 RF_PARAMS = dict(n_estimators=100, max_depth=6, min_samples_leaf=10,
                  max_features=0.5, class_weight=None, random_state=42, n_jobs=1)

@@ -1,4 +1,7 @@
 """Fixtures compartilhadas: dados sintéticos (sem depender do Kaggle) e modelo mínimo."""
+from pathlib import Path
+from uuid import uuid4
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -7,6 +10,13 @@ from sklearn.linear_model import LogisticRegression
 
 from src.config import ALVO, RANDOM_STATE
 from src.train import treinar_campeao
+
+
+def pytest_configure(config):
+    """Isola arquivos temporários por sessão para evitar bloqueios no Windows."""
+    raiz_temporaria = Path(".pytest_runs").resolve()
+    raiz_temporaria.mkdir(exist_ok=True)
+    config.option.basetemp = str(raiz_temporaria / uuid4().hex)
 
 
 def gerar_dados_sinteticos(n: int = 400, seed: int = RANDOM_STATE) -> pd.DataFrame:
@@ -59,7 +69,12 @@ def pipeline(df_sintetico):
 def modelo_path(tmp_path, pipeline):
     import joblib
     path = tmp_path / "pipeline_churn_rf.joblib"
-    joblib.dump(pipeline, path)
+    joblib.dump({
+        "pipeline": pipeline,
+        "limiar": 0.30,
+        "meta_recall": 0.80,
+        "modelo": "Random Forest (teste)",
+    }, path)
     return path
 
 

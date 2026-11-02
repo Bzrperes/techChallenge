@@ -1,146 +1,87 @@
+# Model Card — Previsão de Churn
 
-# Model Card | Previsão de Churn
+## Visão geral
 
-## 1. Descrição do modelo
+O modelo estima a propensão de cancelamento de clientes de telecomunicações a partir do dataset Telco Customer Churn. O problema é uma classificação binária; foram comparados Regressão Logística, Random Forest e `MLPClassifier` com pipelines do Scikit-Learn e validação cruzada estratificada.
 
-Desenvolvemos um modelo de Machine Learning para prever o cancelamento de clientes de uma operadora de telecomunicações, utilizando o dataset Telco Customer Churn.
+A Random Forest ajustada com `GridSearchCV` obteve a maior PR-AUC média e foi escolhida como modelo final. A API FastAPI carrega `models/pipeline_churn_rf.joblib`, que reúne pipeline, limiar e metadados operacionais.
 
-O problema foi tratado como classificação binária. Comparamos Regressão Logística, Random Forest e MLPClassifier, utilizando pipelines do Scikit-Learn e validação cruzada.
+## Dados e features
 
-A Random Forest otimizada com GridSearchCV apresentou a maior PR-AUC média na validação cruzada e foi escolhida como modelo final.
+A base possui 7.043 registros e 33 colunas, com 26,54% de churn. O modelo usa 19 variáveis: `Tenure Months`, `Monthly Charges`, `Total Charges` e 16 categóricas sobre perfil, serviços, contrato e pagamento.
 
-O pipeline está salvo em `models/pipeline_churn_rf.joblib` e é utilizado pela API FastAPI para gerar as previsões.
+Foram removidos identificadores, informações geográficas, colunas constantes e variáveis que revelam o alvo. O pré-processamento fica dentro do pipeline e é ajustado somente nos dados de treino.
 
-## 2. Dados utilizados
+## Treinamento e seleção
 
-O dataset contém 7.043 registros e 33 colunas, com informações sobre os clientes, serviços contratados e pagamentos.
+Os dados foram divididos de forma estratificada em 80% para treino (5.634 registros) e 20% para teste (1.409), com `random_state=42`. A comparação usa cinco folds e a Average Precision, denominada PR-AUC no projeto, como métrica principal.
 
-A variável alvo é `Churn Value`:
+| Modelo | PR-AUC média | ROC-AUC média | Recall a 0,5 |
+|---|---:|---:|---:|
+| Regressão Logística | 0,6788 | 0,8588 | 0,8094 |
+| Random Forest | **0,6862** | **0,8627** | 0,5445 |
+| MLPClassifier | 0,6782 | 0,8587 | 0,5472 |
 
-- `0`: cliente que não cancelou o serviço.
-- `1`: cliente que cancelou o serviço.
+A Regressão Logística tem maior recall no limiar padrão, enquanto a Random Forest tem a melhor PR-AUC. Esses resultados não são contraditórios: PR-AUC avalia o ranking de probabilidades ao longo dos limiares; recall é uma decisão em um limiar específico.
 
-Na análise exploratória, identificamos uma taxa de churn de 26,54%, enquanto 73,46% dos clientes permaneceram na operadora.
-
-Selecionamos 19 variáveis para a modelagem, sendo 3 numéricas e 16 categóricas.
-
-As variáveis numéricas são `Tenure Months`, `Monthly Charges` e `Total Charges`. As categóricas incluem informações sobre serviços, contratos, pagamentos e características dos clientes.
-
-Identificadores, informações geográficas, colunas constantes e variáveis com risco de vazamento foram excluídos da modelagem.
-
-## 3. Treinamento
-
-Utilizamos um pipeline do Scikit-Learn para reunir o pré-processamento e o modelo.
-
-Os dados foram divididos de forma estratificada, com 80% para treinamento e 20% para teste. Também utilizamos validação cruzada com cinco folds para comparar os modelos.
-
-A configuração final da Random Forest foi:
+Configuração final da Random Forest:
 
 | Parâmetro | Valor |
 |---|---|
-| Modelo | RandomForestClassifier |
-| n_estimators | 100 |
-| max_depth | 6 |
-| min_samples_leaf | 10 |
-| max_features | 0.5 |
-| class_weight | None |
-| random_state | 42 |
-| Limiar de classificação | 0.5 |
+| `n_estimators` | 100 |
+| `max_depth` | 6 |
+| `min_samples_leaf` | 10 |
+| `max_features` | 0,5 |
+| `class_weight` | `None` |
+| `random_state` | 42 |
 
-O pré-processamento faz parte do pipeline, permitindo aplicar os mesmos tratamentos durante o treinamento e a inferência.
+## Limiar operacional e performance
 
-O limiar de classificação foi mantido em 0,5, conforme definido na Etapa 2.
+Depois da escolha do algoritmo, probabilidades *out-of-fold* do treino foram usadas para selecionar um limiar com recall mínimo de 80%. Entre os pontos elegíveis, maximizou-se precision, com desempate por F1 e maior limiar. O valor escolhido foi **0,289843**.
 
-## 4. Resultados
+| Métrica | Validação *out-of-fold* | Teste |
+|---|---:|---:|
+| PR-AUC | 0,6862 | 0,6656 |
+| ROC-AUC | 0,8627 | 0,8537 |
+| Recall no limiar | 0,8020 | 0,8021 |
+| Precision no limiar | 0,5445 | 0,5376 |
+| F1 no limiar | 0,6486 | 0,6438 |
 
-Utilizamos a Average Precision, chamada de PR-AUC no projeto, como métrica principal para comparar os modelos.
+O teste não foi usado para escolher o limiar. Entretanto, essa divisão já havia sido observada na Etapa 1 e, portanto, não deve ser apresentada como uma avaliação totalmente inédita ao projeto.
 
-### Validação cruzada
+## Uso previsto
 
-| Métrica | Resultado |
-|---|---:|
-| PR-AUC média | 0,6862 |
-| ROC-AUC | 0,8627 |
+A API oferece:
 
-### Conjunto de teste
+- `GET /health`: estado da aplicação e carga do modelo;
+- `POST /predict`: probabilidade, classe, limiar e identificação do modelo.
 
-| Métrica | Resultado |
-|---|---:|
-| PR-AUC | 0,6656 |
-| ROC-AUC | 0,8537 |
-| Recall | 0,5455 |
-| Precision | 0,6645 |
-| F1-score | 0,5991 |
+As previsões podem apoiar a priorização de clientes para análise ou para um futuro piloto controlado de retenção. Elas não devem ser interpretadas como certeza de cancelamento, nem usadas como única base para decisões adversas ao cliente.
 
-A Random Forest apresentou a maior PR-AUC média na validação cruzada, mas a diferença entre os modelos foi pequena.
+## Métricas de negócio
 
-A Regressão Logística apresentou recall superior, mostrando que a escolha do modelo depende também da métrica considerada e do objetivo de negócio.
+A métrica oficial proposta é a **redução incremental do churn em 90 dias** nos 20% de clientes com maior risco, medida por experimento aleatório entre tratamento e controle. A meta inicial é uma redução absoluta de 3 pontos percentuais, com intervalo de confiança de 95%.
 
-Esses resultados foram obtidos na Etapa 2 e não foram recalculados durante a integração com a API.
+Como métrica financeira futura, propõe-se ROI incremental de retenção mínimo de **1,25 em 180 dias**, com *payback* em até 90 dias. Nenhuma das metas foi medida neste projeto, pois não houve campanha real nem dados de custos e margens.
 
-## 5. Integração com a API
+## Limitações
 
-O modelo foi disponibilizado por meio de uma API REST desenvolvida com FastAPI.
+- O dataset histórico pode não representar outra operadora, região ou período.
+- O conjunto de teste já havia sido observado na Etapa 1.
+- O limiar prioriza a meta de recall, mas não incorpora custos reais de contato, oferta, falso positivo ou falso negativo.
+- As probabilidades não passaram por avaliação específica de calibração.
+- Não há validação temporal, monitoramento de *drift* ou teste em produção.
+- A disponibilidade das 19 features antes da decisão operacional não foi validada com uma operadora.
+- O `MLPClassifier` emitiu aviso de não convergência no limite de iterações; seu resultado deve ser interpretado com essa ressalva.
 
-Foram implementados dois endpoints:
+## Possíveis vieses e uso responsável
 
-- `GET /health`: verifica o funcionamento da aplicação e informa se o modelo foi carregado.
-- `POST /predict`: recebe os dados de um cliente e retorna a probabilidade estimada de churn e a classificação prevista.
+Variáveis como gênero e indicação de cliente idoso podem refletir desigualdades ou produzir desempenhos distintos entre grupos. O projeto não mediu paridade de recall, precision, calibração ou impacto entre grupos protegidos. Antes de uso real, é necessário avaliar essas métricas, justificar a necessidade de cada feature e envolver áreas jurídica, de privacidade e negócio.
 
-A API também retorna o limiar de classificação e a identificação do modelo utilizado.
+As previsões devem apoiar revisão humana e ações benéficas de retenção. Não se recomenda usá-las para negar serviço, aplicar cobrança diferenciada ou tomar decisão automatizada de alto impacto.
 
-Mantivemos o pipeline original, sem realizar novo treinamento ou alterar o limiar definido na modelagem.
+## Reprodutibilidade e validação
 
-As probabilidades retornadas representam estimativas do modelo. Não foi realizada uma avaliação específica de calibração dessas probabilidades.
+O ambiente fixa Python 3.13.15 e dependências exatas por `pyproject.toml` e `uv.lock`. A comparação está em `models/comparacao_modelos.csv`; métricas, versões e limiar estão em `models/metricas_teste.json`; os procedimentos executados estão em `docs/VALIDACAO.md`.
 
-## 6. Limitações
-
-Identificamos algumas limitações que precisam ser consideradas na utilização do modelo:
-
-- O treinamento e a avaliação utilizaram dados históricos do dataset Telco Customer Churn. Não verificamos o desempenho com dados de outras operadoras ou períodos.
-- O conjunto de teste já havia sido utilizado na Etapa 1, portanto não representa uma amostra totalmente inédita ao projeto.
-- O recall de 0,5455 mostra que o modelo deixou de identificar parte dos clientes que cancelaram o serviço.
-- O limiar de 0,5 foi mantido sem uma análise específica dos custos envolvidos nas ações de retenção.
-- Não realizamos avaliações de calibração das probabilidades ou monitoramento do modelo em produção.
-- A redução incremental de churn em 90 dias foi definida como métrica de negócio para um futuro piloto, mas ainda não foi medida em um experimento controlado.
-- O ROI incremental de retenção, com meta inicial de 1,25 em 180 dias, depende de dados de margem, ARPU e custos que não estão disponíveis no dataset e também não foi medido.
-- O funcionamento da API depende do envio de dados compatíveis com as variáveis utilizadas no treinamento.
-
-Essas limitações devem ser consideradas antes de utilizar as previsões para orientar decisões reais de retenção de clientes.
-
-## 7. Possíveis vieses
-
-O dataset contém informações sobre características dos clientes, serviços contratados e formas de pagamento.
-
-Algumas dessas variáveis podem apresentar distribuições diferentes entre grupos de clientes, influenciando os resultados do modelo.
-
-Variáveis como gênero e indicação de cliente idoso merecem atenção, principalmente em uma possível utilização comercial.
-
-Não realizamos uma avaliação específica de vieses ou uma comparação de desempenho entre diferentes grupos.
-
-Por isso, não podemos afirmar que o modelo apresenta o mesmo desempenho para todos os perfis de clientes.
-
-## 8. Validação da integração
-
-Realizamos testes automatizados e verificamos a consistência das previsões entre a API e o pipeline.
-
-Os resultados registrados foram:
-
-- 19 testes aprovados.
-- 2 avisos e nenhuma falha.
-- Resultados equivalentes entre a API e o pipeline para 20 clientes.
-- Nenhum retreinamento durante a verificação.
-
-Esses testes confirmam o funcionamento dos componentes avaliados e a consistência das previsões na amostra utilizada. Eles não representam uma nova avaliação do desempenho preditivo.
-
-Os procedimentos estão documentados em `docs/VALIDACAO.md`.
-
-## 9. Conclusão
-
-Selecionamos a Random Forest por apresentar a maior PR-AUC média na comparação dos modelos.
-
-O pipeline foi integrado à API FastAPI, mantendo as configurações e o comportamento definidos na Etapa 2.
-
-Conseguimos estruturar o processo de previsão de churn, desde a preparação dos dados até a disponibilização do modelo para inferência.
-
-Como próximos passos, seria necessário avaliar o modelo com novos dados, ajustar o limiar por validação cruzada para buscar recall mínimo de 80%, analisar possíveis vieses, verificar a calibração das probabilidades e medir a redução incremental de churn e o ROI em um piloto controlado antes de uma utilização em produção.
+O artefato Joblib deve ser carregado somente de fonte confiável, pois formatos baseados em Pickle podem executar código durante a desserialização.

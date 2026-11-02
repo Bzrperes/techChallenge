@@ -1,20 +1,13 @@
-# Decisões de integração
+# Decisões técnicas da entrega
 
-1. Campeão preservado: Random Forest da etapa 2; PR-AUC/AP = 0,6862 na CV registrada.
-   Valores históricos de teste: AP 0,6656; ROC-AUC 0,8537; recall 0,5455;
-   precision 0,6645; F1 0,5991. Não foram recalculados nesta entrega.
-2. Removida a seleção por ROC-AUC e as configurações alternativas de RF/MLP.
-3. Carregamento direto de `pipeline_churn_rf.joblib`, com validação de tipo,
-   parâmetros críticos, colunas e classes. Essas verificações não provam a origem
-   do arquivo: preservar o artefato original e sua versão continua necessário.
-4. Limiar 0,5 e uso de `predict()` preservados. Em empate exato, a RF escolhe classe 0,
-   coerente com o notebook. Nenhum novo ajuste de limiar foi feito.
-5. Limpeza reaproveitada no treino e na inferência. Ausências categóricas preservadas
-   para o imputador, sem virar texto "nan"; não altera os dados originais sem ausências.
-6. Total Charges ausente: zero apenas para tenure=0, mediana aprendida para demais casos.
-7. Removidas faixas de risco 0,4/0,7 sem sustentação experimental.
-8. Aplicação criada por fábrica; testes executam lifespan, carga do arquivo e previsão.
-9. Verificador opcional com dados reais compara API e pipeline sem retreinar.
-10. Não foi adicionado ML Canvas nem refeita a modelagem: essas pendências das etapas
-    anteriores permanecem separadas. Desempenho e impacto de negócio não são garantidos
-    pela existência de uma API.
+1. A **Random Forest** permanece como campeã por apresentar a maior PR-AUC média na validação cruzada: 0,6862, contra 0,6788 da Regressão Logística e 0,6782 da MLP.
+2. O maior recall da Regressão Logística no limiar 0,5 não foi ignorado. Como recall depende do limiar, a seleção do algoritmo permanece baseada em PR-AUC e a decisão operacional foi tratada separadamente.
+3. O limiar da Random Forest foi calculado com probabilidades *out-of-fold* do treino. Entre os pontos com recall mínimo de 80%, escolheu-se o de maior precision, resultando em 0,289843.
+4. O teste foi usado apenas para a avaliação final do ponto já escolhido. Ele não participou da seleção do modelo ou do limiar; ressalva-se que essa divisão já havia sido observada na Etapa 1.
+5. `pipeline_churn_rf.joblib` passou a armazenar um dicionário com pipeline, limiar, meta de recall e nome do modelo. A API valida esse contrato antes de aceitar o artefato.
+6. A comparação completa foi exportada para `models/comparacao_modelos.csv`, e métricas, versões e limiar foram registrados em `models/metricas_teste.json`.
+7. A limpeza é compartilhada por treino e inferência. `Total Charges` ausente recebe zero somente para `tenure=0`; nos demais casos, a imputação usa a mediana aprendida no treino.
+8. A aplicação é criada por fábrica. Os testes exercitam o ciclo de vida, a carga do arquivo, os endpoints, o pré-processamento e o limiar.
+9. A Etapa 1 foi renomeada para `01_entendimento_e_preparacao.ipynb`; as 48 células copiadas da Etapa 2 foram removidas, preservando uma sequência sem duplicação.
+10. O ML Canvas e o Model Card foram atualizados com a métrica oficial de negócio, a métrica financeira futura, o ponto operacional e as limitações.
+11. Python 3.13.15 e dependências diretas foram fixados em `pyproject.toml`; `uv.lock` registra o ambiente completo e `requirements.txt` é uma exportação exata para uso alternativo.

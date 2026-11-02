@@ -20,9 +20,10 @@ def test_api_equivale_pipeline(client, pipeline, payload_cliente):
     r = client.post("/predict", json=payload_cliente)
     assert r.status_code == 200
     X = preparar_entrada([Cliente(**payload_cliente).para_registro()])
-    assert r.json()["probabilidade_churn"] == pytest.approx(pipeline.predict_proba(X)[0, 1], abs=1e-12)
-    assert r.json()["churn_previsto"] == bool(pipeline.predict(X)[0])
-    assert r.json()["limiar"] == 0.5
+    probabilidade = pipeline.predict_proba(X)[0, 1]
+    assert r.json()["probabilidade_churn"] == pytest.approx(probabilidade, abs=1e-12)
+    assert r.json()["churn_previsto"] == bool(probabilidade >= 0.30)
+    assert r.json()["limiar"] == 0.30
 
 
 @pytest.mark.parametrize("tenure", [0, 10])

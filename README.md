@@ -1,483 +1,177 @@
-# Tech Challenge — Pipeline Preditivo de Churn com Modelagem Clássica e API REST
+# Tech Challenge — Previsão de Churn com Scikit-Learn e FastAPI
 
-Este projeto utiliza o dataset **Telco Customer Churn**, disponibilizado no Kaggle, para analisar os fatores relacionados ao cancelamento de clientes, treinar modelos de classificação com Scikit-Learn e servir o modelo campeão por meio de uma API FastAPI.
+Projeto acadêmico da Fase 1 do curso 12MLET (FIAP). A solução usa o dataset **Telco Customer Churn** para explorar os fatores associados ao cancelamento, comparar modelos de classificação e disponibilizar a propensão de churn por uma API REST.
 
-## Status do projeto
+## Status e entregas
 
-| Etapa | Conteúdo | Situação |
+| Etapa | Entrega | Status |
 |---|---|---|
-| 1 — Entendimento e preparação | EDA, definição de métricas e baseline de Regressão Logística | Concluída |
-| 2 — Modelagem e avaliação | Árvore/Random Forest, MLP, validação cruzada e escolha do campeão | Concluída |
-| 3 — Engenharia de software e API | Refatoração para `src/`, testes com pytest e API FastAPI | Concluída |
-| 4 — Documentação e entrega final | Model Card, README final e vídeo STAR | Documentação do repositório concluída; vídeo tratado separadamente |
+| 1 — Entendimento e preparação | EDA, métricas e baseline de Regressão Logística | Concluída |
+| 2 — Modelagem e avaliação | Random Forest, MLP, validação cruzada e campeão | Concluída |
+| 3 — Engenharia de software | Módulos em `src/`, testes e API FastAPI | Concluída |
+| 4 — Documentação | README, ML Canvas e Model Card | Concluída |
 
-Notebooks: [`TechChallenge.ipynb`](./notebooks/TechChallenge.ipynb) (EDA e baseline) e [`02_modelagem_avaliacao.ipynb`](./notebooks/02_modelagem_avaliacao.ipynb) (modelagem e avaliação).
+Notebooks executados, com saídas visíveis e sem células com erro:
 
-## Estrutura do projeto
+- [`01_entendimento_e_preparacao.ipynb`](./notebooks/01_entendimento_e_preparacao.ipynb): EDA e baseline;
+- [`02_modelagem_avaliacao.ipynb`](./notebooks/02_modelagem_avaliacao.ipynb): comparação, escolha do campeão e ajuste do limiar.
+
+## Estrutura
 
 ```text
-
 techChallenge/
-├── data/                           # Documentação sobre a origem e o uso dos dados
-│   └── README.md                   # Informações sobre o dataset
-├── docs/                           # Documentação técnica do projeto
-│   ├── README.md                   # Índice dos documentos
-│   ├── ML_CANVAS.md                # Problema, objetivos, stakeholders e métricas de negócio
-│   ├── MODEL_CARD.md               # Modelo, métricas, limitações e possíveis vieses
-│   ├── ALTERACOES.md               # Decisões técnicas da integração
-│   └── VALIDACAO.md                # Testes realizados e resultados
-├── models/                         # Modelo final utilizado pela API
-│   ├── README.md                   # Informações sobre o modelo
-│   └── pipeline_churn_rf.joblib    # Pipeline treinado da Random Forest
-├── notebooks/                      # Experimentação e avaliação dos modelos
-│   ├── TechChallenge.ipynb         # EDA e baseline de Regressão Logística
-│   ├── 02_modelagem_avaliacao.ipynb # Comparação e seleção do modelo campeão
-│   └── artefatos/                  # Dados tratados e baseline salvo
-│       ├── baseline_churn.joblib   # Modelo baseline da Etapa 1
-│       └── telco_tratado.csv       # Dataset tratado utilizado na modelagem
-├── src/                            # Código produtivo do pipeline e da API
-│   ├── __init__.py                 # Identificação do pacote Python
-│   ├── api.py                      # API FastAPI (/health e /predict)
-│   ├── config.py                   # Configurações, variáveis e parâmetros
-│   ├── data.py                     # Carregamento e limpeza dos dados
-│   ├── preprocessing.py            # Pré-processamento das variáveis
-│   ├── predict.py                  # Carregamento do modelo e inferência
-│   ├── schemas.py                  # Validação das entradas e saídas da API
-│   ├── train.py                    # Reprodução do treinamento do campeão
-│   └── verify.py                   # Comparação entre API e pipeline
+├── data/                           # Origem e tratamento dos dados
+├── docs/                           # ML Canvas, Model Card e validações
+├── models/
+│   ├── pipeline_churn_rf.joblib    # Pipeline, limiar e metadados operacionais
+│   ├── comparacao_modelos.csv      # Registro comparativo dos experimentos
+│   └── metricas_teste.json         # Métricas, versões e limiar final
+├── notebooks/
+│   ├── 01_entendimento_e_preparacao.ipynb
+│   ├── 02_modelagem_avaliacao.ipynb
+│   └── artefatos/                  # Base tratada e baseline
+├── src/                            # Código produtivo, treinamento e API
 ├── tests/                          # Testes automatizados com Pytest
-│   ├── __init__.py                 # Identificação do pacote de testes
-│   ├── conftest.py                 # Fixtures utilizadas nos testes
-│   ├── test_api.py                 # Testes dos endpoints e das previsões
-│   └── test_preprocessing.py       # Testes de tratamento e pré-processamento
-├── .gitignore                      # Arquivos e pastas ignorados pelo Git
-├── pytest.ini                      # Configuração do Pytest
-├── requirements.txt                # Dependências do projeto
-└── README.md                       # Documentação principal e instruções de execução
-
+├── pyproject.toml                  # Dependências diretas exatas
+├── uv.lock                         # Lockfile completo e reproduzível
+├── requirements.txt                # Exportação exata para alternativa com pip
+└── README.md
 ```
 
-O arquivo `.env`, o ambiente virtual `.venv` e arquivos temporários não são publicados no GitHub. O dataset bruto é obtido diretamente do Kaggle para que o download seja reproduzível e não seja necessário versionar uma cópia local.
+O arquivo `.env`, ambientes virtuais, caches e dados brutos não são versionados.
 
-## Configuração do ambiente
+## Reprodução do ambiente
 
-### Pré-requisitos
+### Opção recomendada: uv
 
-- Python 3.11 ou superior.
-- `pip` disponível no mesmo interpretador que executará o notebook e a API.
-- Credencial válida do Kaggle configurada no ambiente local (necessária apenas para baixar o dataset nos notebooks).
-
-### Configuração da credencial do Kaggle
-
-Cada integrante deverá receber a chave da API por um canal seguro e criar manualmente um arquivo chamado `.env` na raiz do projeto:
-
-```dotenv
-KAGGLE_API_TOKEN=cole_aqui_a_chave_recebida
-```
-
-O `.env` está listado no `.gitignore` e não deve ser adicionado ao Git nem compartilhado no repositório. O nome da variável pode ser documentado; somente o valor da chave deve permanecer restrito aos integrantes autorizados.
-
-### Instalação das dependências
-
-Execute os comandos a partir da pasta raiz do projeto. A utilização de um ambiente virtual evita conflitos com outros projetos.
-
-```bash
-python -m venv .venv
-```
-
-Ative o ambiente virtual no Windows PowerShell:
+Pré-requisitos: Git e [uv](https://docs.astral.sh/uv/getting-started/installation/). O projeto fixa **Python 3.13.15** e todas as dependências; o próprio uv pode instalar essa versão do Python.
 
 ```powershell
-.\.venv\Scripts\Activate.ps1
+git clone https://github.com/Bzrperes/techChallenge.git
+cd techChallenge
+uv python install 3.13.15
+uv sync --frozen
 ```
 
-No Linux ou macOS, utilize:
+O `uv.lock` é a fonte de verdade do ambiente. `--frozen` impede que a instalação altere o lockfile silenciosamente.
 
-```bash
-source .venv/bin/activate
+### Alternativa com pip
+
+Use exatamente Python 3.13.15. O `requirements.txt` é exportado do mesmo lockfile:
+
+```powershell
+py -3.13 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
 ```
 
-Com o ambiente ativado, instale todos os pacotes declarados no arquivo [`requirements.txt`](./requirements.txt):
+## Dados e notebooks
 
-```bash
-python -m pip install --upgrade pip
-python -m pip install -r requirements.txt
+O notebook da Etapa 1 tenta baixar o dataset público pelo `kagglehub`. Em condições normais, uma chave não é necessária para esse dataset. Se o Kaggle exigir autenticação ou aplicar limite de acesso, crie um `.env` local com as variáveis indicadas pela sua conta; nunca versione esse arquivo nem exponha os valores.
+
+Para abrir os notebooks:
+
+```powershell
+uv run jupyter lab
 ```
 
-O uso de `python -m pip` garante que os pacotes sejam instalados no mesmo interpretador Python utilizado para executar o notebook e a API.
+Para reexecutá-los na ordem usada pelo projeto:
 
-**Sobre versões:** para carregar o modelo original, priorize as mesmas versões de Python, Scikit-Learn, NumPy, SciPy e joblib usadas para salvá-lo. O `requirements.txt` contém faixas de compatibilidade e não é um lockfile comprovado do ambiente do grupo. Depois de validar no ambiente original, é possível registrá-lo com `python -m pip freeze > requirements-lock.txt`. Avisos de incompatibilidade de versão do modelo não devem ser tratados como validação concluída.
-
-### Dependências do projeto
-
-| Pacote | Finalidade |
-|---|---|
-| `kagglehub` | Autenticação no Kaggle e download do dataset. |
-| `python-dotenv` | Carregamento das credenciais armazenadas localmente no arquivo `.env`. |
-| `numpy` | Operações numéricas utilizadas durante a EDA e a modelagem. |
-| `pandas` | Leitura, tratamento e análise dos dados tabulares. |
-| `openpyxl` | Mecanismo utilizado pelo Pandas para ler o arquivo Excel do dataset. |
-| `matplotlib` | Construção dos gráficos básicos da análise exploratória. |
-| `seaborn` | Visualizações estatísticas das distribuições e relações com churn. |
-| `scikit-learn` | Pré-processamento, baselines, métricas e modelos de Machine Learning. |
-| `joblib` | Serialização e carga do pipeline treinado. |
-| `fastapi` | Framework da API de inferência. |
-| `uvicorn` | Servidor ASGI para executar a API. |
-| `pytest` | Testes automatizados. |
-
-### Execução dos notebooks
-
-Os notebooks podem ser executados no PyCharm, VS Code ou JupyterLab, conforme o ambiente utilizado por cada integrante.
-
-As dependências principais do projeto estão declaradas no `requirements.txt`. Dependendo da ferramenta escolhida, pode ser necessário instalar pacotes adicionais para executar arquivos `.ipynb`.
-
-Para utilizar o kernel Python do Jupyter:
-
-```bash
-python -m pip install ipykernel
+```powershell
+uv run python -m nbconvert --to notebook --execute --inplace --ExecutePreprocessor.timeout=600 notebooks/01_entendimento_e_preparacao.ipynb
+uv run python -m nbconvert --to notebook --execute --inplace --ExecutePreprocessor.timeout=1800 notebooks/02_modelagem_avaliacao.ipynb
 ```
 
-Para utilizar o JupyterLab:
+A base original possui **7.043 registros e 33 colunas**, com taxa de churn de **26,54%**. Foram selecionadas 19 features (3 numéricas e 16 categóricas); identificadores, geografia, constantes e colunas que revelam o alvo foram excluídos. Imputação, padronização e codificação são ajustadas somente no treino, dentro dos pipelines.
 
-```bash
-python -m pip install jupyterlab
-python -m jupyterlab
-```
+## Métricas do projeto
 
-Esses pacotes são opcionais e não são necessários para executar a API FastAPI.
+### Métrica técnica e decisão do campeão
 
+A **Average Precision**, chamada de PR-AUC no projeto, é a métrica técnica principal. Ela resume o compromisso entre precision e recall da classe positiva e é apropriada ao desbalanceamento observado. ROC-AUC, recall, precision e F1 são métricas complementares.
 
----
+Todos os candidatos usam a mesma divisão estratificada, as mesmas features e validação cruzada com cinco folds. A Random Forest do `GridSearchCV` foi escolhida porque obteve a maior PR-AUC média:
 
-# Etapa 1 — Análise Exploratória de Dados (EDA)
+| Modelo | PR-AUC média | ROC-AUC média | Recall a 0,5 |
+|---|---:|---:|---:|
+| Regressão Logística | 0,6788 | 0,8588 | 0,8094 |
+| Random Forest | **0,6862** | **0,8627** | 0,5445 |
+| MLPClassifier | 0,6782 | 0,8587 | 0,5472 |
 
-As células 1 e 2 do notebook `TechChallenge.ipynb` são responsáveis pela autenticação no Kaggle e pelo carregamento do dataset. A seguir estão os resumos das células de análise exploratória, da 3 à 13.
+A Regressão Logística realmente identifica mais churns no limiar padrão de 0,5, mas isso não a torna automaticamente o melhor modelo: recall depende do limiar. Para separar os objetivos, o projeto usa PR-AUC para escolher a capacidade geral de ordenação e ajusta o limiar do campeão somente com previsões *out-of-fold* do treino.
 
-## Célula 3 — Definição das variáveis
+Entre os limiares com recall de validação de pelo menos 80%, foi escolhido o de maior precision (desempate por F1 e pelo maior limiar). O limiar final é **0,289843**. No teste, ele produziu PR-AUC **0,6656**, ROC-AUC **0,8537**, recall **0,8021**, precision **0,5376** e F1 **0,6438**. O teste não foi usado para selecionar o limiar.
 
-**Variáveis analisadas:** todas as 33 colunas do dataset.
+Os valores completos estão em [`comparacao_modelos.csv`](./models/comparacao_modelos.csv) e [`metricas_teste.json`](./models/metricas_teste.json).
 
-**O que apresenta:** separa as colunas em alvo, numéricas, categóricas, identificação/geografia e possíveis vazamentos de dados.
+### Métrica de negócio
 
-**Principais conclusões:**
+A métrica oficial de negócio é a **redução incremental da taxa de churn em 90 dias** entre os 20% de clientes com maior propensão. Em um futuro piloto, esses clientes seriam divididos aleatoriamente entre tratamento e controle:
 
-- O alvo do modelo é `Churn Value`.
-- Foram selecionadas 3 variáveis numéricas e 16 categóricas.
-- `Churn Label`, `Churn Score`, `CLTV` e `Churn Reason` não devem entrar no baseline por apresentarem risco de vazamento de informação.
+**Redução incremental = taxa de churn do controle − taxa de churn do tratamento**
 
-## Célula 4 — Estrutura e qualidade inicial
+A meta inicial é reduzir o churn em pelo menos **3 pontos percentuais absolutos em 90 dias**, reportando intervalo de confiança de 95%. A escolha:
 
-**Variáveis analisadas:** todas as colunas.
-
-**O que apresenta:** formato da base, tipos de dados, valores ausentes, quantidade de valores únicos, duplicidades e colunas constantes.
-
-**Principais conclusões:**
-
-- A base possui 7.043 clientes e 33 colunas.
-- Não há linhas duplicadas nem valores duplicados em `CustomerID`.
-- `Count`, `Country` e `State` são constantes.
-- `Churn Reason` possui muitos valores ausentes porque só é preenchida para clientes que cancelaram.
-
-## Célula 5 — Validação de `Total Charges`
-
-**Variáveis analisadas:** `Total Charges`, `Tenure Months`, `Monthly Charges` e `Churn Value`.
-
-**O que apresenta:** converte `Total Charges` para o formato numérico, identifica valores inválidos e compara o total informado com a estimativa `Tenure Months × Monthly Charges`.
-
-**Principais conclusões:**
-
-- Existem 11 valores ausentes em `Total Charges`.
-- Esses registros pertencem a clientes com zero meses de permanência.
-- O desvio mediano entre o total informado e o valor estimado é de aproximadamente 2%.
-
-## Célula 6 — Volume e papel das variáveis
-
-**Variáveis analisadas:** todas as colunas, com destaque para `Churn Value` e as features candidatas.
-
-**O que apresenta:** volume da base, memória utilizada, cardinalidade, valores ausentes e função de cada coluna no projeto.
-
-**Principais conclusões:**
-
-- Existem 19 features candidatas ao baseline: 3 numéricas e 16 categóricas.
-- A taxa de churn é de 26,54%.
-- A distribuição do alvo apresenta desbalanceamento moderado.
-
-## Célula 7 — Qualidade, cardinalidade e outliers
-
-**Variáveis analisadas:** todas as colunas; os outliers são verificados em `Tenure Months`, `Monthly Charges` e `Total Charges`.
-
-**O que apresenta:** duplicidades, ausências, colunas constantes, maiores cardinalidades e quantidade de outliers pelo método do intervalo interquartil, ou IQR.
-
-**Principais conclusões:**
-
-- Não existem linhas ou identificadores duplicados.
-- Existem 11 ausências em `Total Charges` e três colunas constantes.
-- As três variáveis numéricas não apresentam outliers pelo critério do IQR.
-- Colunas de identificação e geografia possuem alta cardinalidade e não devem entrar no baseline inicial.
-
-## Célula 8 — Distribuição da variável alvo
-
-**Variável analisada:** `Churn Value`.
-
-**O que apresenta:** quantidade e percentual de clientes com e sem churn.
-
-**Principais conclusões:**
-
-- 26,54% dos clientes cancelaram o serviço.
-- 73,46% dos clientes não cancelaram.
-- Um classificador que previsse sempre "não churn" teria 73,46% de acurácia. Por isso, a acurácia isolada não é suficiente para avaliar o modelo.
-
-## Célula 9 — Distribuição das variáveis numéricas
-
-**Variáveis analisadas:** `Tenure Months`, `Monthly Charges` e `Total Charges`, comparadas com `Churn Value`.
-
-**O que apresenta:** estatísticas descritivas, histogramas, curvas de densidade e boxplots separados por classe.
-
-**Principais conclusões:**
-
-- Clientes com churn possuem menor tempo de permanência e mensalidades maiores.
-- A mediana de permanência é de 10 meses entre clientes com churn e de 38 meses entre os demais.
-- `Total Charges` tende a ser menor entre clientes com churn, principalmente por causa do menor tempo de permanência.
-
-## Célula 10 — Distribuição das variáveis categóricas
-
-**Variáveis analisadas:** as 16 features categóricas, como `Gender`, `Contract`, `Internet Service`, `Payment Method` e os serviços contratados.
-
-**O que apresenta:** gráficos com a frequência de cada categoria.
-
-**Principais conclusões:**
-
-- Algumas categorias possuem frequências bastante diferentes.
-- A análise permite identificar categorias pouco representadas.
-- As variáveis categóricas precisarão ser transformadas antes do treinamento, por exemplo, com One-Hot Encoding.
-
-## Célula 11 — Taxa de churn por categoria
-
-**Variáveis analisadas:** as 16 features categóricas em relação a `Churn Value`.
-
-**O que apresenta:** taxa de churn de cada categoria, quantidade de clientes em cada grupo e comparação com a taxa geral de churn.
-
-**Principais conclusões:**
-
-- Clientes com contrato mensal apresentam churn de aproximadamente 42,7%.
-- Clientes com fibra óptica apresentam churn de aproximadamente 41,9%.
-- Clientes que pagam por cheque eletrônico apresentam churn de aproximadamente 45,3%.
-- Ausência de segurança online e de suporte técnico também está associada a taxas maiores de churn.
-- Contratos de dois anos apresentam taxas de churn consideravelmente menores.
-
-## Célula 12 — Correlações numéricas
-
-**Variáveis analisadas:** `Tenure Months`, `Monthly Charges`, `Total Charges` e `Churn Value`.
-
-**O que apresenta:** matriz de correlação e gráfico das correlações entre as features numéricas e o alvo.
-
-**Principais conclusões:**
-
-- `Tenure Months` possui correlação de aproximadamente -0,35 com o churn, sendo a relação linear mais forte entre as variáveis numéricas.
-- `Total Charges` possui correlação de aproximadamente -0,20.
-- `Monthly Charges` possui correlação de aproximadamente +0,19.
-- Maior tempo de permanência está associado a menor churn, enquanto mensalidades mais altas estão associadas a maior churn.
-
-## Célula 13 — Conclusões e preparação do baseline
-
-**Variáveis analisadas:** principais resultados da EDA e as 19 features selecionadas para o baseline.
-
-**O que apresenta:** resumo dos achados, exclusões, tratamentos recomendados, estratégia de validação e métricas de avaliação.
-
-**Principais conclusões:**
-
-- Identificadores, variáveis geográficas, colunas constantes e variáveis com vazamento de informação não devem entrar no modelo inicial.
-- As features numéricas devem receber imputação pela mediana e padronização, ajustadas somente nos dados de treino.
-- As features categóricas devem ser transformadas com One-Hot Encoding.
-- O notebook cria `X_eda`, com 7.043 registros e 19 features, e `y_eda`, contendo a variável alvo.
-- Para avaliar a Regressão Logística, são recomendadas ROC-AUC e PR-AUC como métricas principais, complementadas por recall, precision, F1 e matriz de confusão.
-
-## Métricas técnicas
-
-A EDA mostrou que 26,54% dos clientes pertencem à classe positiva (`Churn Value = 1`). Portanto, existe um desbalanceamento moderado e a avaliação não deve depender somente da acurácia.
-
-### Métricas adotadas
-
-| Métrica | Papel | Descrição |
-|---|---|---|
-| **PR-AUC** | Métrica principal | Resume a relação entre precision e recall da classe de churn. É mais informativa quando a classe positiva é menos frequente e possui referência natural de aproximadamente 0,2654 neste dataset. |
-| **Recall** | Métrica de negócio complementar | Mede quantos clientes que realmente cancelariam foram identificados. É importante quando deixar um cliente de risco sem ação de retenção possui custo elevado. |
-| **Precision** | Métrica de negócio complementar | Mede quantos clientes classificados como risco realmente cancelariam. Ajuda a controlar o custo de oferecer campanhas de retenção para clientes sem risco. |
-| **F1-score** | Equilíbrio | Combina precision e recall e é útil quando falsos positivos e falsos negativos possuem importância semelhante. |
-| **F2-score** | Alternativa ao F1 | Dá mais peso ao recall. É apropriada caso o negócio conclua que perder um cliente é mais caro do que abordar desnecessariamente um cliente sem risco. |
-| **ROC-AUC** | Métrica complementar | Avalia a capacidade de ordenação do modelo em diferentes limiares. Deve ser reportada, mas não usada sozinha porque pode parecer otimista em bases desbalanceadas. |
-| **Matriz de confusão** | Diagnóstico obrigatório | Mostra diretamente verdadeiros positivos, verdadeiros negativos, falsos positivos e falsos negativos no limiar escolhido. |
-| **Log Loss** | Diagnóstico de probabilidade | Avalia a qualidade das probabilidades previstas e penaliza previsões erradas feitas com confiança excessiva. É útil porque a API retorna propensão de churn. |
-
-### Avaliação
-
-- Utilizar **PR-AUC como métrica técnica principal** para comparar modelos.
-- Definir o limiar de classificação usando **recall e precision**, de acordo com o custo da campanha de retenção e o custo de perder clientes.
-- Reportar também ROC-AUC, F1, F2, Log Loss e matriz de confusão.
-- Comparar os resultados com a taxa base da classe positiva e com um classificador ingênuo.
-- Calcular as métricas em validação cruzada estratificada no conjunto de treino e realizar a avaliação final uma única vez no conjunto de teste.
-
-### Métricas descartadas
-
-| Métrica | Motivo |
-|---|---|
-| **Acurácia** | Um modelo que sempre prevê "não churn" já alcança 73,46% sem identificar nenhum cliente que cancelará. Pode ser informada apenas como referência. |
-| **Especificidade isolada** | Pode favorecer excessivamente a classe majoritária e esconder um recall baixo para churn. |
-| **ROC-AUC isolada** | Considera o desempenho sobre ambas as classes e pode ocultar resultados fracos de precision na classe positiva. Deve permanecer somente como métrica complementar. |
-| **R², MAE, MSE e RMSE** | São métricas de regressão e não são adequadas para um problema de classificação binária. |
-| **MAPE** | Além de ser uma métrica de regressão, não é definida adequadamente quando o valor real pode ser zero, como ocorre no alvo binário. |
-
-## Métrica de negócio
-
-A métrica oficial de negócio do projeto é a **redução incremental da taxa de churn em 90 dias** entre os clientes classificados como de maior risco.
-
-Em uma aplicação real, os 20% de clientes com maior propensão de churn seriam divididos aleatoriamente entre:
-
-- **Grupo de tratamento:** recebe uma ação de retenção.
-- **Grupo de controle:** não recebe a ação durante o período de avaliação.
-
-A métrica seria calculada por:
-
-**Redução incremental de churn = taxa de churn do grupo de controle − taxa de churn do grupo de tratamento**
-
-A meta inicial definida para um futuro piloto é obter uma redução de pelo menos **3 pontos percentuais absolutos** no churn em até 90 dias. O intervalo de confiança de 95% também deverá ser reportado; a expansão da campanha dependeria de evidência de efeito positivo.
-
-Essa métrica foi escolhida porque:
-
-- relaciona diretamente o modelo ao problema de retenção da operadora;
-- mede o efeito da ação, e não apenas a capacidade de prever churn;
-- evita atribuir ao modelo cancelamentos que ocorreriam mesmo sem intervenção;
-- pode ser compreendida e acompanhada pelas áreas de negócio;
+- conecta o modelo diretamente ao objetivo de retenção da operadora;
+- mede o efeito da ação, não apenas a previsão;
+- evita atribuir ao modelo cancelamentos que ocorreriam sem intervenção;
+- pode ser compreendida e acompanhada pelo negócio;
 - não exige inventar custos ou margens ausentes no dataset.
 
-O projeto atual não executou uma campanha real nem um experimento controlado. Portanto, a meta de 3 pontos percentuais representa um objetivo para um piloto futuro, e não um resultado já alcançado.
+O projeto não executou uma campanha real. A meta é uma proposta para um piloto futuro, não um resultado alcançado.
 
-Como critério operacional futuro, o limiar de classificação deverá ser ajustado por validação cruzada no conjunto de treino para buscar **recall mínimo de 80%**, maximizando precision ou valor de negócio entre os limiares que atendam a essa restrição. A PR-AUC permanece como métrica técnica principal para comparar a qualidade geral dos modelos.
+Como métrica financeira futura, propõe-se o **ROI incremental de retenção**, quando houver dados de margem, ARPU, contato e ofertas:
 
-### Métrica financeira futura
+**ROI = margem incremental líquida da campanha ÷ custo total da campanha**
 
-Quando estiverem disponíveis dados de margem, ARPU, custo de contato e custo das ofertas, a campanha também deverá ser avaliada pelo **ROI incremental de retenção**:
+A meta inicial é **ROI mínimo de 1,25 em 180 dias**, com recuperação do investimento em até 90 dias. Ela complementa, mas não substitui, a redução incremental de churn.
 
-**ROI = margem incremental líquida gerada pela campanha ÷ custo total da campanha**
+## Executar e testar
 
-Como meta inicial, propõe-se um ROI mínimo de **1,25 em 180 dias**, com recuperação do investimento em até 90 dias.
-
-Essa métrica financeira será complementar: a redução incremental de churn continuará sendo a métrica principal para demonstrar que a intervenção realmente reteve clientes.
-
-## Baselines
-
-### 1. Regressão Logística
-
-Baseline principal e obrigatório do projeto. Utiliza imputação pela mediana nas variáveis numéricas, padronização com `StandardScaler` e `OneHotEncoder(handle_unknown="ignore")` nas categóricas. É rápida, interpretável, fornece probabilidades e permite analisar a direção dos coeficientes. Recomenda-se testar inicialmente sem balanceamento e depois comparar com `class_weight="balanced"`.
-
-### 2. Árvore de Decisão simples
-
-Utiliza um `DecisionTreeClassifier` com profundidade e tamanho mínimo das folhas limitados. Esse baseline verifica se relações não lineares e interações, como contrato mensal combinado com baixa permanência, produzem ganho sobre a Regressão Logística. A árvore deve ser regularizada para evitar sobreajuste e não substitui a avaliação de Random Forest e MLP.
-
-Os modelos utilizam a mesma divisão estratificada, as mesmas features permitidas e o mesmo procedimento de validação para que a comparação seja justa e reproduzível.
-
----
-
-# Etapa 2 — Modelagem e avaliação
-
-O notebook [`02_modelagem_avaliacao.ipynb`](./notebooks/02_modelagem_avaliacao.ipynb) compara os modelos Linear (Regressão Logística), baseado em árvores (Random Forest) e rede neural simples (`MLPClassifier`), usando validação cruzada e as métricas definidas acima.
-
-O modelo campeão é a **Random Forest do GridSearchCV**, escolhida por Average Precision (chamada PR-AUC no notebook). O pipeline completo (pré-processamento + modelo) é salvo em `models/pipeline_churn_rf.joblib`, gerado pela célula 55 do notebook.
-
----
-
-# Etapa 3 — Engenharia de software e API
-
-A API coloca em produção o campeão escolhido nas etapas 1 e 2. Ela **não realiza nova competição entre modelos**: mantém `predict()` e o limiar original de 0,5, inclusive a regra do Scikit-Learn para empate, e não altera os notebooks das etapas anteriores.
-
-## Executar a API
-
-Na raiz do projeto, com as dependências instaladas:
+Na raiz do repositório:
 
 ```powershell
-.\.venv\Scripts\python.exe -m uvicorn src.api:app --reload
+uv run python -m pytest -q
+uv run python -m src.verify --data notebooks/artefatos/telco_tratado.csv
+uv run uvicorn src.api:app --host 127.0.0.1 --port 8000
 ```
 
-Linux/macOS: use `.venv/bin/python` no lugar de `.\.venv\Scripts\python.exe`.
+O verificador compara, para 20 clientes, as probabilidades e classes retornadas diretamente pelo artefato e pela API. Para verificar toda a base, acrescente `--n 7043`.
 
-Com o servidor em execução, acesse a documentação interativa em http://127.0.0.1:8000/docs e use `POST /predict` > *Try it out* > *Execute*. O exemplo completo aparece automaticamente no formulário. Para encerrar o servidor, pressione `Ctrl + C` no terminal.
-
-## Endpoints
-
-- `GET /health`: o código 200 indica que a aplicação está no ar; confira o campo `modelo_carregado`.
-- `POST /predict`: retorna probabilidade, classificação, limiar e identificação do modelo.
-
-Comportamento e regras de entrada:
-
-- Sem modelo, arquivo inválido ou configuração divergente, `/predict` retorna **503**; consulte o log do terminal para a causa. Reinicie a API após trocar o arquivo do modelo.
-- Dados inválidos retornam **422**. Campos extras são rejeitados.
-- `total_charges` pode ser omitido ou `null`: clientes novos recebem zero; os demais usam a mediana aprendida no pipeline. Não há estimativa por mensalidade × tempo.
-- As categorias devem ser enviadas exatamente como no exemplo da documentação, em inglês.
-- Não há faixas arbitrárias de risco nem promessa de probabilidade calibrada.
-
-### Exemplo de resposta
-
-Uma requisição de teste ao endpoint `POST /predict` retornou o código HTTP **200**, com a seguinte resposta:
-
-```json
-{
-  "probabilidade_churn": 0.7080131434658807,
-  "churn_previsto": true,
-  "limiar": 0.5,
-  "modelo": "Random Forest (Etapa 2)"
-}
-```
-
-Para o cliente utilizado nesse teste, o modelo estimou aproximadamente 70,8% de probabilidade de churn. Como esse valor supera o limiar de 50%, a classificação retornada foi `churn_previsto: true`. A previsão representa uma estimativa do modelo, não uma certeza de que o cliente cancelará o serviço; outros dados de entrada podem produzir resultados diferentes.
-
-## Testes automatizados
+Com a API em execução, a documentação interativa fica em <http://127.0.0.1:8000/docs>. Em outro terminal PowerShell, teste os endpoints:
 
 ```powershell
-.\.venv\Scripts\python.exe -m pytest -q
+Invoke-RestMethod -Method Get -Uri 'http://127.0.0.1:8000/health'
+
+$payload = @{
+  gender = 'Female'; senior_citizen = 'No'; partner = 'Yes'; dependents = 'No'
+  tenure_months = 5; phone_service = 'Yes'; multiple_lines = 'No'
+  internet_service = 'Fiber optic'; online_security = 'No'; online_backup = 'No'
+  device_protection = 'No'; tech_support = 'No'; streaming_tv = 'Yes'
+  streaming_movies = 'Yes'; contract = 'Month-to-month'; paperless_billing = 'Yes'
+  payment_method = 'Electronic check'; monthly_charges = 85.5; total_charges = 420.0
+} | ConvertTo-Json
+
+Invoke-RestMethod -Method Post -Uri 'http://127.0.0.1:8000/predict' `
+  -ContentType 'application/json' -Body $payload
 ```
 
-Resultado observado: **19 testes aprovados, dois avisos e nenhuma falha**.
+`GET /health` retorna o estado da aplicação. `POST /predict` retorna `probabilidade_churn`, `churn_previsto`, `limiar` e `modelo`. Entradas inválidas recebem 422; se o artefato estiver ausente ou incompatível, `/predict` recebe 503 e `/health` informa `modelo_carregado: false`.
 
-Os testes usam dados sintéticos e cobrem, entre outros pontos, a inicialização real da aplicação e a carga do modelo em disco. O sucesso neles não comprova o desempenho do modelo no dataset Telco.
+## Reproduzir o artefato do campeão
 
-## Verificação com o modelo real
-
-Para confirmar que a API retorna as mesmas previsões do pipeline, com o CSV tratado produzido pela Etapa 1:
+O arquivo versionado já está pronto para a API. Para reproduzi-lo deliberadamente:
 
 ```powershell
-.\.venv\Scripts\python.exe -m src.verify --data notebooks/artefatos/telco_tratado.csv
+uv run python -m src.train --data notebooks/artefatos/telco_tratado.csv --overwrite
 ```
 
-O verificador também aceita o XLSX bruto. Ele inicia a aplicação, carrega o arquivo real e compara probabilidades e classes para 20 clientes com as do pipeline direto, sem treinar. Use `--n 7043` para verificar toda a base.
-
-Resultado observado:
-
-```text
-OK: 20 clientes; API e pipeline concordam. Modelo não foi retreinado.
-```
-
-Essa verificação confirma a consistência da integração na amostra avaliada; não representa uma nova avaliação da qualidade preditiva do modelo e, por ser feita em amostra, não certifica todos os casos.
-
-## Reproduzir o modelo (somente se o arquivo original não estiver disponível)
-
-```powershell
-.\.venv\Scripts\python.exe -m src.train --data notebooks/artefatos/telco_tratado.csv
-```
-
-Reproduz a configuração vencedora: 100 árvores, profundidade 6, folha mínima 10, `max_features=0.5`, `class_weight=None`, seed 42 e split estratificado 80/20. Não ajusta hiperparâmetros, não altera o limiar e não usa o teste para selecionar modelo. Salva o Pipeline diretamente e um JSON com métricas e versões. Para sobrescrever um modelo existente é necessário usar `--overwrite`.
-
-Diferenças de versões de bibliotecas ou de dados podem alterar os resultados, portanto esse caminho não garante identidade com o arquivo original. A avaliação usa o mesmo teste já observado na Etapa 2, não uma amostra inédita.
-
+O comando treina a configuração vencedora, calcula o limiar com previsões *out-of-fold* do treino e salva um dicionário com o pipeline, o limiar e os metadados. Também atualiza `models/metricas_teste.json`. O teste já foi observado durante o projeto e não deve ser tratado como uma nova amostra inédita.
 
 ## Documentação complementar
 
-- [`docs/MODEL_CARD.md`](./docs/MODEL_CARD.md): informações sobre o modelo, resultados, limitações e possíveis vieses.
-- [`docs/ALTERACOES.md`](./docs/ALTERACOES.md): decisões técnicas da integração com a API.
-- [`docs/VALIDACAO.md`](./docs/VALIDACAO.md): testes realizados, resultados e limitações das verificações.
+- [`ML_CANVAS.md`](./docs/ML_CANVAS.md): stakeholders, métricas e riscos de negócio;
+- [`MODEL_CARD.md`](./docs/MODEL_CARD.md): performance, uso, limitações e possíveis vieses;
+- [`ALTERACOES.md`](./docs/ALTERACOES.md): decisões técnicas da integração;
+- [`VALIDACAO.md`](./docs/VALIDACAO.md): comandos e evidências da validação final.
 
----
-# Etapa 4 — Documentação e entrega final
-
-Organizamos e validamos a documentação do projeto na pasta `docs/`, incluindo o ML Canvas, o Model Card, as decisões técnicas e os registros de validação.
-
-A documentação do repositório está concluída. O vídeo de apresentação pelo método STAR é uma entrega separada e não está versionado neste repositório.
+O vídeo STAR é uma entrega separada e não está versionado neste repositório.

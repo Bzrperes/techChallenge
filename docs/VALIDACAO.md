@@ -1,87 +1,94 @@
+# Validação final
 
-# Validação do projeto
+Validação realizada em 1º de novembro de 2026, seguindo os comandos do README e usando Python 3.13.15.
 
-Este documento reúne as verificações realizadas durante a integração do modelo de churn com a API FastAPI, incluindo os testes iniciais e as validações posteriores.
+## Ambiente isolado
 
-## 1. Verificações iniciais
-
-As primeiras verificações foram realizadas com dados sintéticos de 400 registros.
-
-Foram verificados:
-
-- Treinamento da Random Forest com a configuração definida na Etapa 2.
-- Salvamento e carregamento do pipeline utilizando um arquivo temporário.
-- Comparação das probabilidades e classes previstas pelo pipeline e pela função de inferência em 20 registros, sem diferenças nos resultados.
-- Tratamento de `Total Charges` ausente: valor zero para clientes com `tenure=0` e `NaN` para clientes com `tenure=10`, permitindo a previsão após o tratamento.
-- Rejeição de modelos com configuração diferente da Random Forest selecionada.
-- Verificação da sintaxe dos módulos Python.
-
-### Ambiente utilizado
-
-As verificações foram realizadas com as seguintes versões:
-
-| Biblioteca | Versão |
-|---|---|
-| Scikit-learn | 1.8.0 |
-| Pandas | 2.2.3 |
-| NumPy | 2.3.5 |
-| Joblib | 1.5.3 |
-| Pydantic | 2.14.1 |
-
-Essas versões correspondem ao ambiente das verificações iniciais, não necessariamente ao ambiente utilizado nos notebooks.
-
-### Limitações iniciais
-
-Nessa primeira execução, não foi possível realizar os testes com Pytest e as chamadas HTTP da FastAPI, pois as dependências necessárias não estavam instaladas. A tentativa de instalação também não foi concluída devido a um timeout de rede.
-
-O arquivo `pipeline_churn_rf.joblib` e a base completa não estavam disponíveis nesse ambiente. Por isso, não foi possível verificar a integração com o modelo original nem recalcular as métricas do dataset Telco.
-
-## 2. Testes automatizados
-
-Posteriormente, foram registrados no README os resultados da execução dos testes automatizados.
-
-Comando utilizado:
+O conteúdo entregável foi copiado para uma pasta temporária, sem `.git`, ambientes virtuais ou caches. O comando abaixo criou um ambiente novo usando apenas os arquivos do projeto:
 
 ```powershell
-.\.venv\Scripts\python.exe -m pytest -q
+uv sync --frozen
 ```
 
-Resultados:
+Resultado: Python 3.13.15 selecionado, `.venv` criado e 132 pacotes instalados conforme `uv.lock`, sem alteração do lockfile.
 
-- 19 testes aprovados.
-- 2 avisos.
-- Nenhuma falha.
+Durante a primeira simulação, o Pytest encontrou pastas temporária e de cache sem permissão no Windows. O projeto foi ajustado para criar um diretório temporário local e único por sessão em `.pytest_runs/` e desativar apenas o plugin de cache. As pastas temporárias são ignoradas pelo Git. Execuções consecutivas confirmaram a correção.
 
-Os testes verificam o pré-processamento, o carregamento do modelo, a validação dos dados de entrada e o funcionamento da API.
-
-Os testes da API utilizam `TestClient` e verificam o carregamento do modelo, as respostas dos endpoints e o comportamento diante de entradas inválidas.
-
-## 3. Verificação com o modelo original
-
-Também foi registrada uma verificação utilizando o pipeline salvo na Etapa 2 e o arquivo `telco_tratado.csv`.
-
-Comando utilizado:
+## Testes automatizados
 
 ```powershell
-.\.venv\Scripts\python.exe -m src.verify --data notebooks/artefatos/telco_tratado.csv
+uv run python -m pytest -q
 ```
 
-Resultado registrado:
+Resultado na reprodução limpa:
+
+```text
+20 passed, 1 warning
+```
+
+O aviso é intencional: um teste envia categoria desconhecida ao `OneHotEncoder` e verifica que ela é tratada com `handle_unknown="ignore"`. Não houve falha.
+
+Os testes cobrem carga e validação do artefato, equivalência entre API e pipeline, endpoints, entradas inválidas, indisponibilidade do modelo, tratamento de dados, categoria desconhecida e seleção do limiar.
+
+## Modelo e integração
+
+```powershell
+uv run python -m src.verify --data notebooks/artefatos/telco_tratado.csv
+```
+
+Resultado:
 
 ```text
 OK: 20 clientes; API e pipeline concordam. Modelo não foi retreinado.
 ```
 
-A comparação confirmou que a API e o pipeline retornaram os mesmos resultados para os 20 clientes avaliados.
+O arquivo `models/pipeline_churn_rf.joblib` carregou sem erro ou aviso de incompatibilidade. Ele contém um dicionário com `pipeline`, `limiar`, `meta_recall` e `modelo`. O limiar carregado foi 0,2898431181242871.
 
-Essa verificação foi realizada sem retreinar o modelo e não representa uma nova avaliação do desempenho preditivo.
+## API em execução
 
-## 4. Limitações das validações
+A API foi iniciada com Uvicorn e chamada por HTTP real. A porta 8000 já estava ocupada na máquina de validação; por isso a evidência final foi coletada na porta alternativa 8766. O comando documentado no README permanece correto quando a porta padrão está livre.
 
-Os testes automatizados utilizam dados sintéticos e verificam o funcionamento dos componentes do projeto. Eles não substituem a avaliação dos modelos realizada na Etapa 2.
+`GET /health` retornou HTTP 200:
 
-A comparação entre a API e o pipeline utilizou 20 clientes. Portanto, os resultados confirmam a consistência nessa amostra, mas não garantem o funcionamento em todos os cenários possíveis.
+```json
+{"status":"ok","modelo_carregado":true}
+```
 
-Os resultados dos testes posteriores foram recuperados do README principal. As saídas completas do terminal e os detalhes dos dois avisos não foram incluídos neste documento.
+`POST /predict`, usando o payload completo do README, retornou HTTP 200:
 
-As limitações das verificações iniciais foram mantidas para registrar o histórico da integração.
+```json
+{
+  "probabilidade_churn": 0.7080131434658807,
+  "churn_previsto": true,
+  "limiar": 0.2898431181242871,
+  "modelo": "Random Forest (Etapa 2)"
+}
+```
+
+## Notebooks
+
+Os dois notebooks foram reexecutados com o ambiente fixado e na ordem documentada:
+
+```powershell
+uv run python -m nbconvert --to notebook --execute --inplace --ExecutePreprocessor.timeout=600 notebooks/01_entendimento_e_preparacao.ipynb
+uv run python -m nbconvert --to notebook --execute --inplace --ExecutePreprocessor.timeout=1800 notebooks/02_modelagem_avaliacao.ipynb
+```
+
+Resultados:
+
+- Etapa 1: 23 células de código, contagens de 1 a 23, sem erro;
+- Etapa 2: 33 células de código, contagens de 1 a 33, sem erro;
+- nenhuma saída contém caminho local ou nome de usuário;
+- o dataset público foi obtido sem chave do Kaggle na validação;
+- o aviso de não convergência da configuração inicial da MLP permanece visível, sem caminho local, e está registrado como limitação no Model Card;
+- `n_jobs=1` evita falhas e rastros de limpeza do Joblib no Windows sem mudar o protocolo experimental.
+
+A reexecução reproduziu o limiar 0,289843, as métricas registradas e os três arquivos da pasta `models/`.
+
+## Script de reprodução do campeão
+
+O módulo `src.train` também foi executado na cópia isolada, direcionando a saída para um arquivo temporário para não substituir o artefato entregue. Ele reproduziu Python 3.13.15, Scikit-Learn 1.9.1, limiar 0,2898431181242871 e todas as métricas de validação e teste registradas no notebook.
+
+## Resultado geral
+
+Instalação bloqueada pelo lockfile, testes, verificador, endpoints e notebooks foram reproduzidos com sucesso. As limitações remanescentes são metodológicas e estão descritas no Model Card: teste previamente observado, ausência de validação externa/temporal, calibração e vieses não avaliados, e métricas de negócio ainda não medidas em campanha real.

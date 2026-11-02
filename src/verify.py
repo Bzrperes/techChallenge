@@ -18,11 +18,12 @@ def main():
     args = parser.parse_args()
     if args.n < 1:
         parser.error('--n deve ser positivo')
-    pipeline = carregar_artefato(args.model)['pipeline']
+    artefato = carregar_artefato(args.model)
+    pipeline = artefato['pipeline']
     X = carregar_dados(args.data)[FEATURES].head(args.n)
     X = X.loc[:, pipeline.feature_names_in_]
     esperado = pipeline.predict_proba(X)[:, 1]
-    classes = pipeline.predict(X)
+    classes = esperado >= artefato['limiar']
     inverso = {v: k for k, v in MAPA_COLUNAS.items()}
     with TestClient(criar_app(args.model)) as client:
         assert client.get('/health').json()['modelo_carregado']

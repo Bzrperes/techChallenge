@@ -62,7 +62,7 @@ def test_rejeita_modelo_divergente(tmp_path, df_sintetico):
     X, y = separar_x_y(df_sintetico)
     modelo = montar_pipeline(LogisticRegression(max_iter=500)).fit(X, y)
     path = tmp_path / "invalido.joblib"
-    joblib.dump(modelo, path)
+    joblib.dump({"pipeline": modelo, "limiar": 0.5}, path)
     with pytest.raises(ValueError, match="RandomForest"):
         carregar_artefato(path)
 
@@ -71,3 +71,16 @@ def test_configuracao_fiel_etapa2(pipeline):
     from src.config import RF_PARAMS
     parametros = pipeline.named_steps["modelo"].get_params()
     assert all(parametros[k] == v for k, v in RF_PARAMS.items())
+
+
+def test_selecao_limiar_atende_meta_e_prioriza_precision():
+    from src.threshold import selecionar_limiar_recall
+
+    y = np.array([1, 1, 1, 1, 0, 0, 0, 0])
+    probabilidades = np.array([0.90, 0.80, 0.70, 0.40, 0.60, 0.30, 0.20, 0.10])
+
+    ponto = selecionar_limiar_recall(y, probabilidades, meta_recall=0.75)
+
+    assert ponto["limiar"] == 0.70
+    assert ponto["recall"] == 0.75
+    assert ponto["precision"] == 1.0

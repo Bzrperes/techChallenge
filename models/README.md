@@ -1,31 +1,13 @@
+# Artefatos do modelo
 
-# Modelo de Machine Learning
+Esta pasta contém os artefatos reproduzidos na Etapa 2:
 
-Esta pasta contém o pipeline da Random Forest selecionada na Etapa 2 do Tech Challenge.
+- `pipeline_churn_rf.joblib`: dicionário com o pipeline treinado, o limiar operacional (0,289843), a meta de recall e o nome do modelo;
+- `comparacao_modelos.csv`: métricas médias de validação cruzada da Regressão Logística, Random Forest e MLPClassifier;
+- `metricas_teste.json`: critério de seleção, métricas de validação e teste, tamanhos das divisões e versões de Python e Scikit-Learn.
 
-## Modelo final
+A Random Forest foi selecionada pela maior PR-AUC média (0,6862). O limiar foi escolhido com previsões *out-of-fold* do treino para atingir recall mínimo de 80% e maximizar precision. No teste, foram observados PR-AUC 0,6656, ROC-AUC 0,8537, recall 0,8021, precision 0,5376 e F1 0,6438.
 
-O arquivo `pipeline_churn_rf.joblib` contém o pré-processamento e o modelo treinado, sendo utilizado pela API FastAPI para realizar as previsões de churn.
+O módulo `src/predict.py` carrega e valida o artefato. Arquivos Joblib/Pickle podem executar código durante a desserialização; carregue somente o arquivo versionado e produzido pelo grupo.
 
-A Random Forest foi escolhida após a comparação com Regressão Logística e MLPClassifier, considerando a maior PR-AUC média na validação cruzada.
-
-## Resultados
-
-| Métrica | Validação cruzada | Teste |
-|---|---:|---:|
-| PR-AUC | 0,6862 | 0,6656 |
-| ROC-AUC | 0,8627 | 0,8537 |
-
-Os resultados foram obtidos na Etapa 2 e não foram recalculados durante a integração com a API.
-
-## Utilização
-
-O pipeline é carregado pelo módulo `src/predict.py`, mantendo as configurações e o limiar de classificação de 0,5 definidos na modelagem.
-
-Não é necessário retreinar o modelo para executar a API, desde que o arquivo original esteja disponível e seja compatível com o ambiente.
-
-## Documentação
-
-As informações sobre treinamento, avaliação e limitações estão disponíveis no [Model Card](../docs/MODEL_CARD.md).
-
-Os testes de integração estão documentados em [VALIDACAO.md](../docs/VALIDACAO.md).
+Detalhes de treinamento, uso e limitações estão no [Model Card](../docs/MODEL_CARD.md).

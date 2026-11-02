@@ -1,0 +1,25 @@
+{
+  "modelo": "Random Forest (GridSearchCV)",
+  "criterio_selecao": "Maior PR-AUC média na validação cruzada",
+  "meta_recall": 0.8,
+  "limiar_operacional": 0.2898431181242871,
+  "metricas_validacao": {
+    "PR-AUC": 0.6861634012594544,
+    "ROC-AUC": 0.8627281473266917,
+    "Recall": 0.8020066889632107,
+    "Precision": 0.5445049954586739,
+    "F1": 0.6486340275899378
+  },
+  "metricas_teste": {
+    "PR-AUC": 0.6655546107759017,
+    "ROC-AUC": 0.853650313880493,
+    "Recall": 0.8021390374331551,
+    "Precision": 0.5376344086021505,
+    "F1": 0.6437768240343348
+  },
+  "n_treino": 5634,
+  "n_teste": 1409,
+  "python": "3.13.15",
+  "scikit_learn": "1.9.1",
+  "observacao": "O limiar foi ajustado com previsões out-of-fold do treino. O conjunto de teste já havia sido observado na Etapa 1."
+}

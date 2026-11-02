@@ -1,143 +1,91 @@
-# ML Canvas | Previsão de Churn
+# ML Canvas — Previsão de Churn
 
-## 1. Contexto e problema de negócio
+## Problema e objetivo
 
-Uma operadora de telecomunicações enfrenta o cancelamento de clientes e precisa identificar quais deles apresentam maior propensão ao churn. O desafio da FIAP propõe desenvolver um pipeline de Machine Learning que apoie essa identificação e disponibilize as previsões por meio de uma API REST.
+Uma operadora de telecomunicações precisa identificar clientes com maior propensão ao cancelamento para priorizar análises e futuras ações de retenção. O projeto estima essa propensão com classificação binária e disponibiliza o resultado por uma API REST. A execução de campanhas reais não faz parte do escopo acadêmico.
 
-No projeto, churn corresponde ao cancelamento do serviço. O objetivo é estimar a propensão ao cancelamento a partir das características disponíveis no dataset, sem afirmar que as previsões, por si só, reduzem a perda de clientes.
-
-## 2. Objetivo do projeto
-
-Desenvolver e avaliar um modelo supervisionado de classificação binária para prever churn de clientes de telecomunicações. A solução deve reunir preparação dos dados, comparação de modelos, escolha de um pipeline final e disponibilização das previsões por uma API FastAPI.
-
-O resultado esperado é oferecer uma informação que possa apoiar a priorização de análises e eventuais ações de retenção. A implementação de campanhas de retenção não faz parte do escopo executado.
-
-## 3. Stakeholders
+## Stakeholders
 
 | Stakeholder | Interesse ou responsabilidade |
 |---|---|
-| Diretoria da operadora | Compreender o risco de perda de clientes e avaliar possíveis decisões de retenção, conforme o contexto apresentado pela FIAP. |
-| Equipe de retenção/relacionamento | Possível usuária das previsões para priorizar análises e contatos. **Papel proposto**, não validado com uma operadora real. |
-| Equipe técnica e de dados | Preparar os dados, desenvolver, avaliar, integrar e manter o pipeline e a API no contexto do projeto acadêmico. |
-| Clientes da operadora | Pessoas potencialmente afetadas por decisões orientadas pelas previsões; exigem atenção à privacidade e ao tratamento justo. |
+| Diretoria | Avaliar risco de perda, resultado incremental e viabilidade financeira de retenção. |
+| Retenção e relacionamento | Priorizar análises e contatos em um futuro piloto. |
+| Equipe de dados e tecnologia | Preparar dados, avaliar, implantar e monitorar o pipeline e a API. |
+| Jurídico e privacidade | Avaliar base legal, minimização de dados, transparência e tratamento justo. |
+| Clientes | Pessoas afetadas pelas ações; precisam de privacidade e decisões não discriminatórias. |
 
-Os stakeholders operacionais apresentados são uma interpretação do cenário acadêmico. Não houve levantamento de requisitos com uma empresa real.
+Esses papéis são propostos para o cenário acadêmico e não foram validados com uma operadora real.
 
-## 4. Dados disponíveis
+## Dados
 
-| Item | Definição registrada no projeto |
+| Item | Definição |
 |---|---|
-| Dataset | Telco Customer Churn, disponibilizado no Kaggle |
-| Natureza | Dados tabulares históricos de clientes, serviços contratados e pagamentos |
-| Base original | 7.043 registros e 33 colunas |
-| Alvo | `Churn Value` |
-| Classe 0 | Cliente que não cancelou o serviço |
-| Classe 1 | Cliente que cancelou o serviço |
-| Distribuição observada | 26,54% com churn e 73,46% sem churn |
-| Variáveis preditoras | 19, sendo 3 numéricas e 16 categóricas |
-| Arquivo tratado | `notebooks/artefatos/telco_tratado.csv` |
+| Dataset | Telco Customer Churn (Kaggle) |
+| Volume | 7.043 registros e 33 colunas |
+| Alvo | `Churn Value` (0 = permaneceu; 1 = cancelou) |
+| Distribuição | 26,54% churn; 73,46% não churn |
+| Features | 19: 3 numéricas e 16 categóricas |
+| Divisão | 80% treino e 20% teste, estratificada, seed 42 |
 
-As variáveis numéricas são `Tenure Months`, `Monthly Charges` e `Total Charges`. As categóricas tratam de características dos clientes, serviços, contratos e meios de pagamento.
+Identificadores, geografia, constantes e variáveis que revelam o alvo são excluídos. Imputação, padronização e codificação ficam dentro dos pipelines e são ajustadas somente no treino. A disponibilidade operacional de todas as features ainda precisa ser confirmada em um cenário real.
 
-Na preparação foram excluídos identificadores, informações geográficas, colunas constantes e variáveis consideradas com risco de vazamento de informação. O pré-processamento está incorporado ao pipeline do Scikit-Learn.
+## Modelagem e critério técnico
 
-A possibilidade de obter as 19 variáveis **antes do momento da previsão, em um cenário operacional real**, não foi verificada com uma operadora. Essa validação seria necessária para uso em produção.
+- Baseline obrigatório: Regressão Logística.
+- Candidatos: Regressão Logística, Random Forest e `MLPClassifier`.
+- Validação: cinco folds estratificados, com as mesmas features e divisão.
+- Métrica principal: Average Precision, chamada PR-AUC no projeto.
+- Complementares: ROC-AUC, recall, precision e F1.
+- Campeão: Random Forest do `GridSearchCV`, PR-AUC média 0,6862.
 
-## 5. Abordagem de Machine Learning
+A Regressão Logística alcançou recall 0,8094 no limiar 0,5, acima da Random Forest (0,5445), mas recall é dependente do limiar. A Random Forest foi mantida por ter melhor PR-AUC e ROC-AUC médias; depois, seu limiar foi tratado como decisão operacional separada.
 
-O problema foi formulado como **classificação binária supervisionada**.
+Com probabilidades *out-of-fold* do treino, selecionou-se o ponto de maior precision entre os que atingem recall mínimo de 80%. O limiar resultante foi 0,289843.
 
-- **Baseline:** Regressão Logística.
-- **Modelos comparados:** Regressão Logística, Random Forest e `MLPClassifier`.
-- **Separação dos dados:** 80% para treinamento e 20% para teste, de forma estratificada.
-- **Validação cruzada:** cinco folds.
-- **Métrica principal da seleção:** Average Precision, denominada PR-AUC no projeto.
-- **Métricas complementares:** ROC-AUC, precision, recall e F1-score.
-- **Modelo selecionado:** Random Forest ajustada com `GridSearchCV`.
-- **Limiar mantido:** 0,5.
-
-O pipeline final reúne pré-processamento e modelo e está salvo em `models/pipeline_churn_rf.joblib`.
-
-## 6. Métricas técnicas e resultados observados
-
-A PR-AUC foi utilizada como critério principal de comparação porque o projeto busca identificar a classe de churn, que corresponde a aproximadamente 26,54% dos registros.
-
-| Métrica | Validação cruzada | Teste |
+| Métrica | Validação *out-of-fold* | Teste |
 |---|---:|---:|
-| PR-AUC / Average Precision | 0,6862 | 0,6656 |
+| PR-AUC | 0,6862 | 0,6656 |
 | ROC-AUC | 0,8627 | 0,8537 |
-| Precision | Não registrada aqui | 0,6645 |
-| Recall | Não registrado aqui | 0,5455 |
-| F1-score | Não registrado aqui | 0,5991 |
+| Recall | 0,8020 | 0,8021 |
+| Precision | 0,5445 | 0,5376 |
+| F1 | 0,6486 | 0,6438 |
 
-A Random Forest apresentou a maior PR-AUC média na validação cruzada. A Regressão Logística apresentou recall superior, o que mostra que a escolha também depende do objetivo de negócio. Esses resultados foram obtidos na Etapa 2 e não representam desempenho comprovado em produção.
+O teste não escolheu o limiar, mas já havia sido observado na Etapa 1 e não é uma amostra totalmente inédita.
 
-## 7. Métricas de negócio
+## Métrica oficial de negócio
 
-A métrica oficial de negócio é a **redução incremental da taxa de churn em 90 dias** entre os clientes classificados como de maior risco.
+A métrica oficial é a **redução incremental da taxa de churn em 90 dias** entre os 20% de clientes com maior risco. Em um piloto futuro, essa população seria dividida aleatoriamente entre tratamento e controle:
 
-Em uma aplicação real, os 20% de clientes com maior propensão de churn seriam divididos aleatoriamente entre um grupo de tratamento, que receberia uma ação de retenção, e um grupo de controle, que não receberia a ação durante o período de avaliação.
+**Redução incremental = churn do controle − churn do tratamento**
 
-**Redução incremental de churn = taxa de churn do grupo de controle − taxa de churn do grupo de tratamento**
+A meta é uma redução de pelo menos **3 pontos percentuais absolutos em 90 dias**, com intervalo de confiança de 95%. A expansão dependeria de evidência de efeito positivo.
 
-A meta inicial para um futuro piloto é reduzir o churn em pelo menos **3 pontos percentuais absolutos** em até 90 dias. O intervalo de confiança de 95% também deverá ser reportado; a expansão da campanha dependeria de evidência de efeito positivo.
+Essa métrica conecta o modelo à retenção, mede o efeito da ação em vez da simples previsão, evita atribuir ao modelo cancelamentos que ocorreriam sem intervenção, é compreensível para o negócio e não exige inventar custos ou margens ausentes no dataset.
 
-Essa métrica foi escolhida porque relaciona o modelo ao problema de retenção, mede o efeito da ação em vez de apenas a capacidade de prever churn, evita atribuir ao modelo cancelamentos que ocorreriam sem intervenção, pode ser acompanhada pelas áreas de negócio e não exige inventar custos ou margens ausentes no dataset.
+Não houve campanha nem experimento controlado; a meta é futura, não um resultado do projeto.
 
-O projeto atual não executou campanha real ou experimento controlado. A meta de 3 pontos percentuais é um objetivo para um piloto futuro, não um resultado alcançado.
+## Métrica financeira futura
 
-Como critério operacional futuro, o limiar de classificação deverá ser ajustado por validação cruzada no treino para buscar **recall mínimo de 80%**, maximizando precision ou valor de negócio entre os limiares elegíveis. A PR-AUC permanece como métrica técnica principal de comparação dos modelos.
+Quando houver margem, ARPU, custo de contato e custo de oferta, será medido o **ROI incremental de retenção**:
 
-### Métrica financeira futura
+**ROI = margem incremental líquida da campanha ÷ custo total da campanha**
 
-Quando houver dados de margem, ARPU, custo de contato e custo das ofertas, a campanha também deverá ser avaliada pelo **ROI incremental de retenção**:
+A meta inicial é **ROI mínimo de 1,25 em 180 dias**, com recuperação do investimento em até 90 dias. Ela complementa a redução incremental de churn e ainda não foi medida.
 
-**ROI = margem incremental líquida gerada pela campanha ÷ custo total da campanha**
+## Uso, riscos e controles
 
-A meta inicial proposta é um ROI mínimo de **1,25 em 180 dias**, com recuperação do investimento em até 90 dias. Essa métrica será complementar à redução incremental de churn e ainda não foi medida no projeto.
+A API retorna probabilidade e classe de churn para apoiar priorização. O resultado não é certeza e não deve produzir decisão adversa automatizada.
 
-## 8. Utilização prevista da solução
+Principais riscos: mudança de população, baixa calibração, custos de falsos positivos, perda de churns, indisponibilidade de features, vieses entre grupos, vazamento de dados e degradação temporal. Antes de uso real, devem ser feitos piloto controlado, análise de calibração e vieses, revisão de privacidade, validação temporal e monitoramento de dados e performance.
 
-A API FastAPI disponibiliza dois endpoints:
+## Evidências
 
-- `GET /health`: informa o estado da aplicação e se o modelo foi carregado.
-- `POST /predict`: recebe as características de um cliente e retorna a probabilidade estimada de churn, a classe prevista, o limiar e o modelo utilizado.
-
-Uma utilização potencial seria ordenar clientes por risco estimado para apoiar a análise de uma equipe responsável pela retenção. Essa aplicação é **uma possibilidade de negócio**, não uma funcionalidade de campanhas implementada ou testada no projeto.
-
-## 9. Restrições, riscos e limitações
-
-- Os dados são históricos e não representam necessariamente clientes de outra operadora ou período.
-- O conjunto de teste já havia sido observado na Etapa 1; portanto, não é uma amostra inteiramente inédita ao projeto.
-- O recall de 0,5455 indica que parte dos clientes que cancelaram não foi identificada pelo modelo.
-- O limiar de 0,5 não foi escolhido com base em custos reais de ações de retenção.
-- Não foram realizadas análise de calibração das probabilidades, auditoria de vieses por grupo nem avaliação em produção.
-- Características dos clientes, como gênero e indicação de cliente idoso, exigem atenção em eventual uso comercial.
-- As previsões devem apoiar análises humanas, e não ser tratadas como certeza de cancelamento.
-
-## 10. Entregas e evidências do projeto
-
-| Entrega | Evidência no repositório |
+| Entrega | Caminho |
 |---|---|
-| Exploração de dados e baseline | `notebooks/TechChallenge.ipynb` |
-| Comparação e avaliação dos modelos | `notebooks/02_modelagem_avaliacao.ipynb` |
+| EDA e baseline | `notebooks/01_entendimento_e_preparacao.ipynb` |
+| Comparação e limiar | `notebooks/02_modelagem_avaliacao.ipynb` |
+| Resultados dos experimentos | `models/comparacao_modelos.csv` e `models/metricas_teste.json` |
 | Modelo final | `models/pipeline_churn_rf.joblib` |
-| Pré-processamento e inferência | `src/` |
-| API FastAPI | `src/api.py` |
-| Testes automatizados | `tests/` e `docs/VALIDACAO.md` |
-| Desempenho, limitações e possíveis vieses | `docs/MODEL_CARD.md` |
-| Instalação e execução | `README.md` |
-
-Foram registrados 19 testes aprovados, dois avisos e nenhuma falha. A API e o pipeline retornaram resultados equivalentes para uma amostra de 20 clientes. Essas verificações avaliam a integração, não o impacto comercial do projeto.
-
-## 11. Síntese e próximos passos
-
-O projeto entregou um pipeline de classificação de churn com Random Forest e inferência por API. A seleção do modelo foi feita por PR-AUC média na validação cruzada, mantendo o limiar de 0,5.
-
-A redução incremental de churn em 90 dias foi adotada como métrica oficial de negócio, com meta de 3 pontos percentuais para um futuro piloto controlado. O ROI incremental de retenção foi definido como métrica financeira futura, com meta inicial de 1,25 em 180 dias. Como não houve validação com stakeholders de uma operadora, campanha real ou medição comercial, essas metas não são apresentadas como resultados alcançados.
-
----
-
-**Referências internas:** `README.md`, `data/README.md`, `docs/MODEL_CARD.md`, `docs/VALIDACAO.md`, `src/config.py` e os notebooks das Etapas 1 e 2.
-
-**Referência do desafio:** PDF oficial *12MLET - Tech Challenge Fase 1*, Etapa 1: preenchimento do ML Canvas com stakeholders e métricas de negócio.
+| API e módulos | `src/` |
+| Testes | `tests/` e `docs/VALIDACAO.md` |
+| Limitações e vieses | `docs/MODEL_CARD.md` |
