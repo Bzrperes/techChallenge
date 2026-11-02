@@ -1,12 +1,14 @@
 """Inferência com o artefato operacional da Etapa 2, sem retreinamento."""
 from pathlib import Path
+
 import joblib
 import numpy as np
 import pandas as pd
-from sklearn.pipeline import Pipeline
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.pipeline import Pipeline
 from sklearn.utils.validation import check_is_fitted
-from src.config import MODEL_PATH, FEATURES, RF_PARAMS
+
+from src.config import FEATURES, MODEL_PATH, RF_PARAMS
 from src.preprocessing import preparar_entrada
 
 

@@ -1,10 +1,12 @@
 """Verifica o modelo real e a API, sem retreiná-lo."""
 import argparse
 import json
+
 import numpy as np
 from fastapi.testclient import TestClient
+
 from src.api import criar_app
-from src.config import MODEL_PATH, FEATURES
+from src.config import FEATURES, MODEL_PATH
 from src.data import carregar_dados
 from src.predict import carregar_artefato
 from src.schemas import MAPA_COLUNAS

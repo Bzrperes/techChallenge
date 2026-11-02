@@ -7,10 +7,8 @@ CV_SPLITS = 5
 META_RECALL = 0.80
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
-DATA_DIR = ROOT_DIR / "data"
 MODELS_DIR = ROOT_DIR / "models"
 MODEL_PATH = MODELS_DIR / "pipeline_churn_rf.joblib"
-COMPARISON_PATH = MODELS_DIR / "comparacao_modelos.csv"
 METRICS_PATH = MODELS_DIR / "metricas_teste.json"
 
 # --- Colunas (mesmo contrato definido na EDA, Etapa 1) ---

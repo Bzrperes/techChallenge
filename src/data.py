@@ -29,8 +29,13 @@ def carregar_dados(caminho: str | Path) -> pd.DataFrame:
     caminho = Path(caminho)
     if caminho.suffix.lower() in {".xlsx", ".xls"}:
         df = pd.read_excel(caminho)
-    else:
+    elif caminho.suffix.lower() == ".csv":
         df = pd.read_csv(caminho)
+    else:
+        raise ValueError("Formato não suportado; use CSV, XLSX ou XLS.")
+    faltando = [coluna for coluna in FEATURES + [ALVO] if coluna not in df.columns]
+    if faltando:
+        raise ValueError(f"Colunas obrigatórias ausentes: {faltando}")
     df = limpar_features(df)
     return df[FEATURES + [ALVO]].copy()
 

@@ -1,5 +1,8 @@
 .env
 .venv*/
+.kaggle/
+.vscode/
+.idea/
 __pycache__/
 *.py[cod]
 .ipynb_checkpoints/
@@ -8,5 +11,15 @@ __pycache__/
 .pytest_runs/
 .coverage
 htmlcov/
+mlruns/
+build/
+dist/
+*.egg-info/
 .DS_Store
 Thumbs.db
+
+data/*
+!data/README.md
+!data/processed/
+data/processed/*
+!data/processed/telco_tratado.csv
