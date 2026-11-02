@@ -1,8 +1,10 @@
-"""API da Etapa 3: uvicorn src.api:app --reload."""
+"""API de inferência de churn: uvicorn src.api:app --reload."""
+import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
-import logging
+
 from fastapi import Depends, FastAPI, HTTPException, Request
+
 from src.config import MODEL_PATH
 from src.predict import carregar_artefato, prever
 from src.schemas import Cliente, Predicao, Saude
@@ -26,7 +28,7 @@ def criar_app(model_path: str | Path = MODEL_PATH) -> FastAPI:
         yield
         app.state.artefato = None
 
-    app = FastAPI(title="Churn — Etapa 3", version="2.0.0", lifespan=lifespan)
+    app = FastAPI(title="API de propensão de churn", version="0.1.0", lifespan=lifespan)
 
     @app.get("/health", response_model=Saude)
     def health(request: Request):

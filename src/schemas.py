@@ -1,7 +1,7 @@
 """Schemas Pydantic de entrada e saída da API."""
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 SimNao = Literal["Yes", "No"]
 SimNaoSemInternet = Literal["Yes", "No", "No internet service"]
@@ -54,6 +54,36 @@ class Cliente(BaseModel):
     total_charges: float | None = Field(
         default=None, ge=0,
         description="Opcional. Ausência: zero para tenure=0; nos demais casos, mediana aprendida no treino.")
+
+    @model_validator(mode="after")
+    def validar_combinacoes_de_servicos(self):
+        """Rejeita combinações que não existem no contrato do dataset."""
+        sem_telefone = self.multiple_lines == "No phone service"
+        if (self.phone_service == "No") != sem_telefone:
+            raise ValueError(
+                "multiple_lines deve ser 'No phone service' somente quando phone_service='No'."
+            )
+
+        servicos_internet = (
+            "online_security",
+            "online_backup",
+            "device_protection",
+            "tech_support",
+            "streaming_tv",
+            "streaming_movies",
+        )
+        sem_internet = self.internet_service == "No"
+        incoerentes = [
+            campo
+            for campo in servicos_internet
+            if (getattr(self, campo) == "No internet service") != sem_internet
+        ]
+        if incoerentes:
+            raise ValueError(
+                "Serviços dependentes devem usar 'No internet service' somente quando "
+                f"internet_service='No': {incoerentes}."
+            )
+        return self
 
     def para_registro(self) -> dict:
         """Converte para os nomes de coluna usados no treino."""
